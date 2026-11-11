@@ -1,0 +1,5 @@
+game/cmake/CPM.cmake
+game/.cpm-cache
+game/vc140.pdb
+game/out
+game/.vs

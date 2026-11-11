@@ -1,0 +1,252 @@
+﻿{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "msvc-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl.exe",
+        "CMAKE_CXX_COMPILER": "cl.exe",
+        "CMAKE_PROJECT_TOP_LEVEL_INCLUDES": "$env{VSINSTALLDIR}Common7/IDE/CommonExtensions/Microsoft/CMake/cmake/Microsoft/SegmentHeap.cmake",
+        "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": "ON"
+      },
+      "condition": {
+        "type": "allOf",
+        "conditions": [
+          {
+            "type": "equals",
+            "lhs": "${hostSystemName}",
+            "rhs": "Windows"
+          },
+          {
+            "type": "notEquals",
+            "lhs": "$env{VSINSTALLDIR}",
+            "rhs": ""
+          }
+        ]
+      }
+    },
+
+    {
+      "name": "emscripten-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}",
+      "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+      "cacheVariables": {
+        "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": "ON"
+      },
+      "condition": {
+        "type": "notEquals",
+        "lhs": "$env{EMSDK}",
+        "rhs": ""
+      }
+    },
+
+    {
+      "name": "clang-base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "installDir": "${sourceDir}/out/install/${presetName}",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_SUPPRESS_DEVELOPER_WARNINGS": "ON"
+      }
+    },
+
+    {
+      "name": "x64-debug",
+      "displayName": "x64 Debug (MSVC)",
+      "inherits": "msvc-base",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "$env{VSCMD_ARG_TGT_ARCH}",
+        "rhs": "x64"
+      }
+    },
+    {
+      "name": "x64-release",
+      "displayName": "x64 Release (MSVC)",
+      "inherits": "msvc-base",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "$env{VSCMD_ARG_TGT_ARCH}",
+        "rhs": "x64"
+      }
+    },
+    {
+      "name": "x86-debug",
+      "displayName": "x86 Debug (MSVC)",
+      "inherits": "msvc-base",
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "$env{VSCMD_ARG_TGT_ARCH}",
+        "rhs": "x86"
+      }
+    },
+    {
+      "name": "x86-release",
+      "displayName": "x86 Release (MSVC)",
+      "inherits": "msvc-base",
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "$env{VSCMD_ARG_TGT_ARCH}",
+        "rhs": "x86"
+      }
+    },
+
+    {
+      "name": "x64-debug-clang",
+      "displayName": "x64 Debug (Clang)",
+      "inherits": "clang-base",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "x64-release-clang",
+      "displayName": "x64 Release (Clang)",
+      "inherits": "clang-base",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "x86-debug-clang",
+      "displayName": "x86 Debug (Clang)",
+      "inherits": "clang-base",
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "x86-release-clang",
+      "displayName": "x86 Release (Clang)",
+      "inherits": "clang-base",
+      "architecture": {
+        "value": "x86",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "wasm-debug",
+      "displayName": "WebAssembly Debug (Emscripten)",
+      "inherits": "emscripten-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "wasm-release",
+      "displayName": "WebAssembly Release (Emscripten)",
+      "inherits": "emscripten-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    {
+      "name": "x64-debug",
+      "configurePreset": "x64-debug",
+      "targets": [ "install" ]
+    },
+    {
+      "name": "x64-release",
+      "configurePreset": "x64-release",
+      "targets": [ "install" ]
+    },
+    {
+      "name": "x86-debug",
+      "configurePreset": "x86-debug",
+      "targets": [ "install" ]
+    },
+    {
+      "name": "x86-release",
+      "configurePreset": "x86-release",
+      "targets": [ "install" ]
+    },
+
+    {
+      "name": "x64-debug-clang",
+      "configurePreset": "x64-debug-clang",
+      "targets": [ "install" ]
+    },
+    {
+      "name": "x64-release-clang",
+      "configurePreset": "x64-release-clang",
+      "targets": [ "install" ]
+    },
+    {
+      "name": "x86-debug-clang",
+      "configurePreset": "x86-debug-clang",
+      "targets": [ "install" ]
+    },
+    {
+      "name": "x86-release-clang",
+      "configurePreset": "x86-release-clang",
+      "targets": [ "install" ]
+    },
+
+    {
+      "name": "wasm-debug",
+      "configurePreset": "wasm-debug",
+      "targets": [ "install" ]
+    },
+    {
+      "name": "wasm-release",
+      "configurePreset": "wasm-release",
+      "targets": [ "install" ]
+    }
+  ]
+}

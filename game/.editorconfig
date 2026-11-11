@@ -1,0 +1,22 @@
+root = true
+
+[*.cpp]
+insert_final_newline = true
+
+[*.c]
+insert_final_newline = true
+
+[*.h]
+insert_final_newline = true
+
+[*.hpp]
+insert_final_newline = true
+
+[*.ixx]
+insert_final_newline = true
+
+[*.cppm]
+insert_final_newline = true
+
+[CMakeLists.txt]
+insert_final_newline = true

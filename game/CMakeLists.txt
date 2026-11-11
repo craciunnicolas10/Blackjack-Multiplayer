@@ -20,6 +20,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_compile_definitions($<$<CONFIG:Debug>:BLACKJACK_DEBUG_BUILD>)
 
+if(UNIX AND NOT APPLE)
+    set(CMAKE_INSTALL_RPATH "$ORIGIN")
+endif()
+
 add_subdirectory(Backend)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)

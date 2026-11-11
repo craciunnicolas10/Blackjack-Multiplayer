@@ -7,7 +7,10 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION bin)
-install(FILES $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> DESTINATION bin)
+
+install(TARGETS sfml-graphics sfml-window sfml-system
+    LIBRARY DESTINATION bin
+)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Backend SFML::Graphics)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

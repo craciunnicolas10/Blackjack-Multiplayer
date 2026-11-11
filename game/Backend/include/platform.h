@@ -11,5 +11,3 @@
 #else
 #define BLACKJACK_API
 #endif
-
-#define BLACKJACK_EXTERN_C extern "C"

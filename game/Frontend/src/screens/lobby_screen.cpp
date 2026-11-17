@@ -9,6 +9,8 @@
 #include <screens/menu_screen.h>
 #include <screens/screen_manager.h>
 #include <screens/table_screen.h>
+#include <ui/crisp_text.h>
+#include <ui/theme.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
@@ -51,10 +53,11 @@ namespace Frontend {
 
     LobbyScreen::LobbyScreen(AppContext context)
         : m_context(context),
-          m_title(context.font, utf8("Jucători"), 48),
+          m_title(context.font, utf8("Jucători"), Theme::kTextTitle),
           m_hint(context.font,
-                 utf8("Adaugă între 1 și " + std::to_string(kMaxPlayers) + " jucători"), 22),
-          m_error(context.font, "", 20),
+                 utf8("Adaugă între 1 și " + std::to_string(kMaxPlayers) + " jucători"),
+                 Theme::kTextBody),
+          m_error(context.font, "", Theme::kTextSmall + 2),
           m_nameInput(context.font, {kInputX, kInputY}, kInputSize, kMaxNameLength),
           m_addButton(context.font, utf8("Adaugă"), {kInputX + kInputSize.x + kRowGap, kInputY},
                       kAddSize),
@@ -63,13 +66,13 @@ namespace Frontend {
                        kBottomButtonSize),
           m_startButton(context.font, utf8("Start"), {kLogicalWidth / 2.f + 20.f, kBottomY},
                         kBottomButtonSize) {
-        m_title.setFillColor(sf::Color(240, 210, 120));
+        m_title.setFillColor(Theme::kGold);
         centerHorizontally(m_title, 50.f);
 
-        m_hint.setFillColor(sf::Color(200, 200, 200));
+        m_hint.setFillColor(Theme::kTextSecondary);
         centerHorizontally(m_hint, 125.f);
 
-        m_error.setFillColor(sf::Color(255, 120, 110));
+        m_error.setFillColor(Theme::kNegative);
 
         m_nameInput.setPlaceholder(utf8("Numele jucătorului"));
         m_nameInput.setFocused(true);
@@ -103,29 +106,27 @@ namespace Frontend {
     void LobbyScreen::update(float dt) { m_nameInput.update(dt); }
 
     void LobbyScreen::draw(sf::RenderTarget& target) {
-        sf::RectangleShape background({kLogicalWidth, kLogicalHeight});
-        background.setFillColor(sf::Color(20, 60, 35));
-        target.draw(background);
+        m_background.draw(target);
 
-        target.draw(m_title);
-        target.draw(m_hint);
+        drawText(target, m_title);
+        drawText(target, m_hint);
         m_nameInput.draw(target);
         m_addButton.draw(target);
-        target.draw(m_error);
+        drawText(target, m_error);
 
         for (std::size_t i = 0; i < m_players.size(); ++i) {
             const float rowY = kListY + static_cast<float>(i) * kListRowHeight;
 
             sf::RectangleShape row({kListWidth, kListRowHeight - 8.f});
             row.setPosition({kListX, rowY});
-            row.setFillColor(sf::Color(10, 40, 22));
+            row.setFillColor(Theme::kPanelFill);
             target.draw(row);
 
-            sf::Text name(m_context.font, utf8(std::to_string(i + 1) + ". "), 28);
+            sf::Text name(m_context.font, utf8(std::to_string(i + 1) + ". "), Theme::kTextHeading);
             name.setString(name.getString() + m_players.at(i));
             name.setPosition({kListX + 16.f, rowY + 10.f});
-            name.setFillColor(sf::Color::White);
-            target.draw(name);
+            name.setFillColor(Theme::kTextPrimary);
+            drawText(target, name);
         }
         for (const Button& button : m_removeButtons) {
             button.draw(target);

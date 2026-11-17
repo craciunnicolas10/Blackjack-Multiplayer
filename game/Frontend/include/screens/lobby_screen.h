@@ -9,6 +9,7 @@
 #include <app/app_context.h>
 #include <screens/screen.h>
 #include <ui/button.h>
+#include <ui/felt_background.h>
 #include <ui/text_input.h>
 
 namespace Frontend {
@@ -35,6 +36,7 @@ namespace Frontend {
         void showError(const sf::String& message);
 
         AppContext m_context;
+        FeltBackground m_background;
         sf::Text m_title;
         sf::Text m_hint;
         sf::Text m_error;

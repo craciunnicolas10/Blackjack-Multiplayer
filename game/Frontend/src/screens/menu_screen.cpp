@@ -5,6 +5,8 @@
 #include <app/layout.h>
 #include <screens/lobby_screen.h>
 #include <screens/screen_manager.h>
+#include <ui/crisp_text.h>
+#include <ui/theme.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
@@ -18,13 +20,12 @@ namespace Frontend {
 
     MenuScreen::MenuScreen(AppContext context)
         : m_context(context),
-          m_title(context.font, utf8("Blackjack"), 72),
-          m_subtitle(context.font, utf8("Echipa Dealerii"), 28) {
-        m_title.setFillColor(sf::Color(240, 210, 120));
-        centerHorizontally(m_title, 150.f);
+          m_banner(context.font, context.cards),
+          m_subtitle(context.font, utf8("Echipa Dealerii"), Theme::kTextHeading) {
+        m_banner.setPosition({kLogicalWidth / 2.f, 150.f});
 
-        m_subtitle.setFillColor(sf::Color(200, 200, 200));
-        centerHorizontally(m_subtitle, 250.f);
+        m_subtitle.setFillColor(Theme::kTextSecondary);
+        centerHorizontally(m_subtitle, 262.f);
 
         const sf::Vector2f buttonSize{280.f, 64.f};
         const float buttonX = (kLogicalWidth - buttonSize.x) / 2.f;
@@ -46,13 +47,12 @@ namespace Frontend {
         }
     }
 
-    void MenuScreen::draw(sf::RenderTarget& target) {
-        sf::RectangleShape background({kLogicalWidth, kLogicalHeight});
-        background.setFillColor(sf::Color(20, 60, 35));
-        target.draw(background);
+    void MenuScreen::update(float dt) { m_banner.update(dt); }
 
-        target.draw(m_title);
-        target.draw(m_subtitle);
+    void MenuScreen::draw(sf::RenderTarget& target) {
+        m_background.draw(target);
+        m_banner.draw(target);
+        drawText(target, m_subtitle);
         for (const Button& button : m_buttons) {
             button.draw(target);
         }

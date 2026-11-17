@@ -10,6 +10,8 @@
 #include <screens/screen_manager.h>
 #include <ui/card_textures.h>
 #include <ui/card_view.h>
+#include <ui/crisp_text.h>
+#include <ui/theme.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
@@ -31,8 +33,6 @@ namespace Frontend {
         constexpr float kResultGap = 16.f;  // între eticheta cu rezultatul și cărți
         // Cât stă masa cu rezultatele la vedere înainte să apară ecranul de rezultat.
         constexpr float kSummaryDelay = 1.f;
-
-        const sf::Color kGold(240, 210, 120);
 
         sf::Vector2f actionPosition(int index) {
             return {kActionsLeft + static_cast<float>(index) * (kActionSize.x + kActionGap),
@@ -64,6 +64,9 @@ namespace Frontend {
         }
         m_dealerHand.setPosition(kDealerPosition);
 
+        m_hitButton.setHint("H");
+        m_standButton.setHint("S");
+        m_doubleButton.setHint("D");
         m_hitButton.setOnClick([this] { requestAction(Action::Hit); });
         m_standButton.setOnClick([this] { requestAction(Action::Stand); });
         m_doubleButton.setOnClick([this] { requestAction(Action::DoubleDown); });
@@ -209,6 +212,11 @@ namespace Frontend {
 
     void TableScreen::setPlayerScore(std::size_t seat, std::optional<int> score) {
         m_scores.at(seat) = score;
+        // Peste 21: mâna se scutură și apare „Peste 21!” după ce ajunge ultima carte.
+        SeatView& seatView = m_seats[seat];
+        if (score && *score > 21 && !seatView.isBustShown()) {
+            seatView.showBust();
+        }
     }
 
     void TableScreen::setDealerScore(std::optional<int> score) { m_dealerScore = score; }
@@ -476,12 +484,12 @@ namespace Frontend {
 
     void TableScreen::drawLabel(sf::RenderTarget& target, const sf::String& text,
                                 sf::Vector2f centerTop) const {
-        sf::Text label(m_context.font, text, 22);
+        sf::Text label(m_context.font, text, Theme::kTextBody);
         const sf::FloatRect bounds = label.getLocalBounds();
         label.setOrigin({bounds.position.x + bounds.size.x / 2.f, bounds.position.y});
         label.setPosition(centerTop);
-        label.setFillColor(sf::Color::White);
-        target.draw(label);
+        label.setFillColor(Theme::kTextPrimary);
+        drawText(target, label);
     }
 
     // Bulina cu scorul, pe colțul din dreapta-sus al mâinii. Roșie peste 21.
@@ -492,16 +500,16 @@ namespace Frontend {
         sf::CircleShape bubble(kScoreRadius);
         bubble.setOrigin({kScoreRadius, kScoreRadius});
         bubble.setPosition(center);
-        bubble.setFillColor(score > 21 ? sf::Color(170, 40, 40) : sf::Color(20, 20, 20));
-        bubble.setOutlineColor(kGold);
+        bubble.setFillColor(score > 21 ? Theme::kDanger : sf::Color(20, 20, 20));
+        bubble.setOutlineColor(Theme::kGold);
         bubble.setOutlineThickness(2.f);
         target.draw(bubble);
 
-        sf::Text text(m_context.font, std::to_string(score), 18);
+        sf::Text text(m_context.font, std::to_string(score), Theme::kTextSmall);
         const sf::FloatRect textBounds = text.getLocalBounds();
         text.setOrigin(textBounds.position + textBounds.size / 2.f);
         text.setPosition(center);
-        text.setFillColor(sf::Color::White);
-        target.draw(text);
+        text.setFillColor(Theme::kTextPrimary);
+        drawText(target, text);
     }
 }  // namespace Frontend

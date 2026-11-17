@@ -6,6 +6,8 @@
 #include <utility>
 
 #include <app/layout.h>
+#include <ui/crisp_text.h>
+#include <ui/theme.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
@@ -18,9 +20,7 @@ namespace Frontend {
 
         // Coloanele: nume, rezultat, câștig, bani (x față de marginea din stânga a panoului).
         constexpr float kColumns[] = {32.f, 250.f, 420.f, 510.f};
-        constexpr unsigned kCellSize = 22;
-
-        const sf::Color kGold(240, 210, 120);
+        constexpr unsigned kCellSize = Theme::kTextBody;
 
         sf::Vector2f panelSize(std::size_t rowCount) {
             const float rows = static_cast<float>(rowCount) * RoundSummaryPanel::kRowHeight;
@@ -66,8 +66,8 @@ namespace Frontend {
           m_font(&font),
           m_dim({kLogicalWidth, kLogicalHeight}),
           m_background(m_size),
-          m_title(font, utf8("Rezultatele rundei"), 30),
-          m_dealerLine(font, "", 20),
+          m_title(font, utf8("Rezultatele rundei"), Theme::kTextHeading + 2),
+          m_dealerLine(font, "", Theme::kTextSmall + 2),
           m_nextButton(font, utf8("Runda următoare"), {buttonsLeft(), buttonsY(rowCount)},
                        kNextSize),
           m_menuButton(font, utf8("Meniu"),
@@ -76,13 +76,13 @@ namespace Frontend {
         m_dim.setFillColor(sf::Color(0, 0, 0, 130));
 
         m_background.setPosition(m_position);
-        m_background.setFillColor(sf::Color(10, 40, 22, 245));
-        m_background.setOutlineColor(kGold);
+        m_background.setFillColor(Theme::kPanelFill);
+        m_background.setOutlineColor(Theme::kGold);
         m_background.setOutlineThickness(3.f);
 
-        m_title.setFillColor(kGold);
+        m_title.setFillColor(Theme::kGold);
         centerTextAt(m_title, {m_position.x + m_size.x / 2.f, m_position.y + kPadding + 16.f});
-        m_dealerLine.setFillColor(sf::Color(200, 200, 200));
+        m_dealerLine.setFillColor(Theme::kTextSecondary);
 
         m_nextButton.setOnClick([this] {
             if (m_onNextRound) {
@@ -118,14 +118,14 @@ namespace Frontend {
 
             const std::string net = row.net > 0 ? "+" + std::to_string(row.net)
                                                 : std::to_string(row.net);
-            const sf::Color netColor = row.net > 0   ? sf::Color(110, 210, 120)
-                                       : row.net < 0 ? sf::Color(235, 100, 100)
-                                                     : sf::Color(180, 180, 180);
+            const sf::Color netColor = row.net > 0   ? Theme::kPositive
+                                       : row.net < 0 ? Theme::kNegative
+                                                     : Theme::kTextMuted;
 
             const sf::String texts[] = {row.name, utf8(roundResultLabel(row.result)), utf8(net),
                                         utf8("Bani: " + std::to_string(row.money))};
             const sf::Color colors[] = {sf::Color::White, lighter(roundResultColor(row.result)),
-                                        netColor, sf::Color(220, 220, 220)};
+                                        netColor, Theme::kTextSecondary};
 
             for (std::size_t column = 0; column < 4; ++column) {
                 sf::Text cell(*m_font, texts[column], kCellSize);
@@ -159,8 +159,8 @@ namespace Frontend {
     void RoundSummaryPanel::draw(sf::RenderTarget& target) const {
         target.draw(m_dim);
         target.draw(m_background);
-        target.draw(m_title);
-        target.draw(m_dealerLine);
+        drawText(target, m_title);
+        drawText(target, m_dealerLine);
 
         // Rânduri cu fundal alternativ, ca să se urmărească ușor pe orizontală.
         for (std::size_t i = 0; i < m_cells.size() / 4; ++i) {
@@ -173,7 +173,7 @@ namespace Frontend {
             }
         }
         for (const sf::Text& cell : m_cells) {
-            target.draw(cell);
+            drawText(target, cell);
         }
 
         m_nextButton.draw(target);

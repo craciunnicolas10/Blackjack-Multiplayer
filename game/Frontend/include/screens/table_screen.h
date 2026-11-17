@@ -9,19 +9,18 @@
 #include <SFML/Graphics.hpp>
 
 #include <app/app_context.h>
+#include <game/round_result.h>
 #include <screens/screen.h>
 #include <ui/betting_panel.h>
 #include <ui/button.h>
 #include <ui/hand_view.h>
 #include <ui/result_badge.h>
+#include <ui/round_summary_panel.h>
 #include <ui/seat_view.h>
 #include <ui/table_background.h>
 
 namespace Frontend {
     class FakeGame;
-
-    // Rezultatul unui jucător la sfârșitul rundei. Până se mută ERoundResult în Backend.
-    enum class RoundResult { Win, Lose, Push, Blackjack };
 
     // Masa de joc. Nu știe regulile: jocul (deocamdată FakeGame, apoi adaptorul IGameListener)
     // îi spune ce să arate prin funcțiile publice de mai jos, iar masa anunță prin
@@ -71,8 +70,14 @@ namespace Frontend {
         // jetoanele pariului pleacă spre jucător (câștig, egal) sau spre dealer (pierdere).
         void showResult(std::size_t seat, RoundResult result);
 
-        // Strânge cărțile, scorurile și rezultatele și închide panoul de pariu, pentru o rundă
-        // nouă. Banii și pariurile afișate rămân.
+        // Ecranul de rezultat: apare peste masă după ce s-au terminat toate animațiile
+        // (cărți, jetoane, etichete), cu „Runda următoare” și „Meniu”. Se apelează după
+        // showResult și setPlayerMoney; `netWinnings[seat]` = cât a câștigat (+) sau a pierdut
+        // (-) jucătorul în runda asta. Locurile fără rezultat nu apar.
+        void showRoundSummary(std::vector<int> netWinnings);
+
+        // Strânge cărțile, scorurile și rezultatele și închide panoul de pariu și ecranul de
+        // rezultat, pentru o rundă nouă. Banii și pariurile afișate rămân.
         void clearRound();
 
         // True cât timp se mișcă ceva: cărți, jetoane, bani sau etichetele cu rezultatul.
@@ -83,6 +88,8 @@ namespace Frontend {
         void setOnStand(std::function<void()> onStand);
         void setOnDoubleDown(std::function<void()> onDoubleDown);
         void setOnBet(std::function<void(int)> onBet);
+        // „Runda următoare” de pe ecranul de rezultat.
+        void setOnNextRound(std::function<void()> onNextRound);
 
        private:
         enum class Action { Hit, Stand, DoubleDown };
@@ -94,6 +101,7 @@ namespace Frontend {
         bool cardsInMotion() const;
         // Când nu mai e nicio carte pe drum: aplică banii amânați și arată rezultatele.
         void applyWhenCardsSettled();
+        void openRoundSummary();
         void refreshActionButtons();
         // Evidențiază locul jucătorului la rând sau al celui care pariază.
         void refreshSeatHighlight();
@@ -113,6 +121,7 @@ namespace Frontend {
         std::vector<std::optional<int>> m_scores;
         std::vector<std::optional<ResultBadge>> m_results;
         std::vector<std::optional<int>> m_pendingMoney;
+        std::vector<int> m_money;  // ultima sumă primită de la joc, pentru ecranul de rezultat
         bool m_resultsShown = false;  // etichetele sunt pe ecran și jetoanele au plecat
         HandView m_dealerHand;
         std::optional<int> m_dealerScore;
@@ -133,16 +142,24 @@ namespace Frontend {
         Button m_doubleButton;
         Button m_menuButton;
         BettingPanel m_bettingPanel;
+        RoundSummaryPanel m_summaryPanel;
 
         std::function<void()> m_onHit;
         std::function<void()> m_onStand;
         std::function<void()> m_onDoubleDown;
         std::function<void(int)> m_onBet;
+        std::function<void()> m_onNextRound;
 
         // Ca în lobby: butoanele doar marchează ce s-a cerut, acțiunea rulează după ce s-au
         // terminat de parcurs evenimentele.
         std::optional<Action> m_pendingAction;
         std::optional<int> m_pendingBet;
+        bool m_nextRoundRequested = false;
+
+        // Ecranul de rezultat: cerut de joc, apare după animații și o mică pauză.
+        std::optional<std::vector<int>> m_summaryNet;
+        float m_summaryDelay = 0.f;
+        bool m_summaryVisible = false;
         bool m_menuRequested = false;
 
         // Temporar, până vine Backend-ul: o rundă jucată cu cărți aleatoare.

@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <optional>
+#include <utility>
+#include <vector>
 
 #include <screens/table_screen.h>
 #include <ui/card_textures.h>
@@ -18,6 +20,7 @@ namespace Frontend {
         m_table.setOnStand([this] { stand(); });
         m_table.setOnDoubleDown([this] { doubleDown(); });
         m_table.setOnBet([this](int amount) { placeBet(amount); });
+        m_table.setOnNextRound([this] { startRound(); });
         for (std::size_t seat = 0; seat < m_players.size(); ++seat) {
             m_table.setPlayerMoney(seat, m_players[seat].money);
         }
@@ -27,7 +30,6 @@ namespace Frontend {
         m_table.clearRound();
         m_dealer.clear();
         m_dealerRevealed = false;
-        m_roundOver = false;
 
         for (std::size_t seat = 0; seat < m_players.size(); ++seat) {
             Player& player = m_players[seat];
@@ -84,16 +86,6 @@ namespace Frontend {
         dealToDealer(true);
 
         nextTurn(0);
-    }
-
-    void FakeGame::update(float dt) {
-        if (!m_roundOver || m_table.isAnimating()) {
-            return;
-        }
-        m_nextRoundTimer -= dt;
-        if (m_nextRoundTimer <= 0.f) {
-            startRound();
-        }
     }
 
     int FakeGame::score(const std::vector<Card>& hand) {
@@ -216,6 +208,7 @@ namespace Frontend {
     void FakeGame::settle() {
         const int dealerScore = score(m_dealer);
         const bool dealerBlackjack = isBlackjack(m_dealer);
+        std::vector<int> netWinnings(m_players.size(), 0);
 
         for (std::size_t seat = 0; seat < m_players.size(); ++seat) {
             Player& player = m_players[seat];
@@ -237,25 +230,29 @@ namespace Frontend {
                 result = RoundResult::Push;
             }
 
-            // Pariul a fost deja scos din bani; aici se dă înapoi cu câștigul.
+            // Câștigul net: blackjack plătește 3:2, câștigul 1:1, egalul își păstrează pariul.
+            int net = 0;
             switch (result) {
                 case RoundResult::Blackjack:
-                    player.money += player.bet + player.bet * 3 / 2;
+                    net = player.bet * 3 / 2;
                     break;
                 case RoundResult::Win:
-                    player.money += 2 * player.bet;
+                    net = player.bet;
                     break;
                 case RoundResult::Push:
-                    player.money += player.bet;
+                    net = 0;
                     break;
                 case RoundResult::Lose:
+                    net = -player.bet;
                     break;
             }
+            // Pariul a fost deja scos din bani la pariere; acum se dă înapoi cu câștigul.
+            player.money += player.bet + net;
+            netWinnings[seat] = net;
             m_table.setPlayerMoney(seat, player.money);
             m_table.showResult(seat, result);
         }
 
-        m_roundOver = true;
-        m_nextRoundTimer = kNextRoundDelay;
+        m_table.showRoundSummary(std::move(netWinnings));
     }
 }  // namespace Frontend

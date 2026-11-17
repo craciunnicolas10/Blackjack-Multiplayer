@@ -8,41 +8,12 @@
 #include <SFML/Graphics/ConvexShape.hpp>
 
 #include <audio/sound_player.h>
-#include <screens/table_screen.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
     namespace {
         constexpr float kCornerRadius = 10.f;
         constexpr int kCornerPoints = 6;  // puncte pe fiecare colț rotunjit
-
-        const char* labelFor(RoundResult result) {
-            switch (result) {
-                case RoundResult::Win:
-                    return "Câștig";
-                case RoundResult::Lose:
-                    return "Pierdere";
-                case RoundResult::Push:
-                    return "Egal";
-                case RoundResult::Blackjack:
-                    return "Blackjack!";
-            }
-            return "";
-        }
-
-        sf::Color colorFor(RoundResult result) {
-            switch (result) {
-                case RoundResult::Win:
-                    return sf::Color(40, 140, 60);
-                case RoundResult::Lose:
-                    return sf::Color(170, 40, 40);
-                case RoundResult::Push:
-                    return sf::Color(100, 100, 100);
-                case RoundResult::Blackjack:
-                    return sf::Color(190, 140, 20);
-            }
-            return sf::Color::Black;
-        }
 
         // Depășește puțin 1 și revine, ca o etichetă care „sare” la locul ei.
         float easeOutBack(float t) {
@@ -83,7 +54,9 @@ namespace Frontend {
     }  // namespace
 
     ResultBadge::ResultBadge(const sf::Font& font, RoundResult result)
-        : m_result(result), m_text(font, utf8(labelFor(result)), 20), m_color(colorFor(result)) {
+        : m_result(result),
+          m_text(font, utf8(roundResultLabel(result)), 20),
+          m_color(roundResultColor(result)) {
         m_text.setStyle(sf::Text::Bold);
         const sf::FloatRect bounds = m_text.getLocalBounds();
         m_text.setOrigin(bounds.position + bounds.size / 2.f);

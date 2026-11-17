@@ -6,11 +6,9 @@
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/System/Vector2.hpp>
 
-namespace Frontend {
-    // Definit în screens/table_screen.h. Aici e doar declarat, ca table_screen.h să poată
-    // include acest header fără include circular.
-    enum class RoundResult;
+#include <game/round_result.h>
 
+namespace Frontend {
     // Eticheta cu rezultatul unui jucător („Câștig”, „Pierdere”, „Egal”, „Blackjack!”).
     // La apariție crește puțin peste mărimea finală și apoi se așază. Animația începe la primul
     // update(), deci trebuie actualizată doar de când eticheta e vizibilă.

@@ -29,6 +29,8 @@ namespace Frontend {
 
         constexpr float kScoreRadius = 17.f;
         constexpr float kResultGap = 16.f;  // între eticheta cu rezultatul și cărți
+        // Cât stă masa cu rezultatele la vedere înainte să apară ecranul de rezultat.
+        constexpr float kSummaryDelay = 1.f;
 
         const sf::Color kGold(240, 210, 120);
 
@@ -45,12 +47,14 @@ namespace Frontend {
           m_scores(m_playerNames.size()),
           m_results(m_playerNames.size()),
           m_pendingMoney(m_playerNames.size()),
+          m_money(m_playerNames.size(), 0),
           m_dealerHand(context.cards),
           m_hitButton(context.font, utf8("Hit"), actionPosition(0), kActionSize),
           m_standButton(context.font, utf8("Stand"), actionPosition(1), kActionSize),
           m_doubleButton(context.font, utf8("Double"), actionPosition(2), kActionSize),
           m_menuButton(context.font, utf8("Meniu"), {24.f, 24.f}, {140.f, 48.f}),
-          m_bettingPanel(context.font, {(kLogicalWidth - BettingPanel::kSize.x) / 2.f, 80.f}) {
+          m_bettingPanel(context.font, {(kLogicalWidth - BettingPanel::kSize.x) / 2.f, 80.f}),
+          m_summaryPanel(context.font, m_playerNames.size()) {
         m_seats.reserve(m_playerNames.size());
         for (const sf::String& name : m_playerNames) {
             m_seats.emplace_back(context.font, context.cards, name);
@@ -65,6 +69,8 @@ namespace Frontend {
         m_doubleButton.setOnClick([this] { requestAction(Action::DoubleDown); });
         m_menuButton.setOnClick([this] { m_menuRequested = true; });
         m_bettingPanel.setOnConfirm([this](int bet) { m_pendingBet = bet; });
+        m_summaryPanel.setOnNextRound([this] { m_nextRoundRequested = true; });
+        m_summaryPanel.setOnMenu([this] { m_menuRequested = true; });
         refreshActionButtons();
 
         m_game = std::make_unique<FakeGame>(*this);
@@ -101,6 +107,9 @@ namespace Frontend {
         if (m_bettingSeat) {
             m_bettingPanel.handleEvent(event, m_context.window);
         }
+        if (m_summaryVisible) {
+            m_summaryPanel.handleEvent(event, m_context.window);
+        }
 
         applyPendingActions();
     }
@@ -136,8 +145,11 @@ namespace Frontend {
             }
         }
 
-        if (m_game) {
-            m_game->update(dt);
+        if (m_summaryNet && !m_summaryVisible && !isAnimating()) {
+            m_summaryDelay -= dt;
+            if (m_summaryDelay <= 0.f) {
+                openRoundSummary();
+            }
         }
     }
 
@@ -176,11 +188,15 @@ namespace Frontend {
         if (m_bettingSeat) {
             m_bettingPanel.draw(target);
         }
+        if (m_summaryVisible) {
+            m_summaryPanel.draw(target);
+        }
     }
 
     std::size_t TableScreen::getSeatCount() const { return m_seats.size(); }
 
     void TableScreen::setPlayerMoney(std::size_t seat, int money) {
+        m_money.at(seat) = money;
         if (cardsInMotion()) {
             m_pendingMoney.at(seat) = money;
         } else {
@@ -264,6 +280,9 @@ namespace Frontend {
             m_results[seat].reset();
         }
         m_resultsShown = false;
+        m_summaryNet.reset();
+        m_summaryVisible = false;
+        m_nextRoundRequested = false;
         m_dealerHand.clear();
         m_dealerScore.reset();
         m_pendingReveal.reset();
@@ -339,6 +358,29 @@ namespace Frontend {
 
     void TableScreen::setOnBet(std::function<void(int)> onBet) { m_onBet = std::move(onBet); }
 
+    void TableScreen::setOnNextRound(std::function<void()> onNextRound) {
+        m_onNextRound = std::move(onNextRound);
+    }
+
+    void TableScreen::showRoundSummary(std::vector<int> netWinnings) {
+        netWinnings.resize(m_seats.size(), 0);
+        m_summaryNet = std::move(netWinnings);
+        m_summaryDelay = kSummaryDelay;
+        m_summaryVisible = false;
+    }
+
+    void TableScreen::openRoundSummary() {
+        std::vector<RoundSummaryRow> rows;
+        for (std::size_t seat = 0; seat < m_seats.size(); ++seat) {
+            if (m_results[seat]) {
+                rows.push_back({m_playerNames[seat], m_results[seat]->getResult(),
+                                (*m_summaryNet)[seat], m_money[seat]});
+            }
+        }
+        m_summaryPanel.open(rows, m_dealerScore);
+        m_summaryVisible = true;
+    }
+
     // Locurile sunt împărțite egal pe lățimea mesei, oricâți jucători ar fi.
     sf::Vector2f TableScreen::seatPosition(std::size_t seat) const {
         const float slots = static_cast<float>(m_seats.size() + 1);
@@ -385,6 +427,14 @@ namespace Frontend {
             m_pendingAction.reset();
             m_pendingBet.reset();
             goToMenu();
+            return;
+        }
+
+        if (m_nextRoundRequested) {
+            m_nextRoundRequested = false;
+            if (m_onNextRound) {
+                m_onNextRound();
+            }
             return;
         }
 

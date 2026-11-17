@@ -19,12 +19,10 @@ namespace Frontend {
         static constexpr int kMaxBet = 500;
         static constexpr int kDefaultBet = 50;  // propus în prima rundă
         static constexpr int kDealerStandsOn = 17;
-        static constexpr float kNextRoundDelay = 3.f;  // secunde după ce apar rezultatele
 
         explicit FakeGame(TableScreen& table);
 
         void startRound();
-        void update(float dt);
 
        private:
         struct Card {
@@ -68,7 +66,5 @@ namespace Frontend {
         std::vector<Card> m_dealer;
         std::size_t m_bettingSeat = 0;
         bool m_dealerRevealed = false;  // s-a întors a doua carte a dealerului
-        bool m_roundOver = false;
-        float m_nextRoundTimer = 0.f;
     };
 }  // namespace Frontend

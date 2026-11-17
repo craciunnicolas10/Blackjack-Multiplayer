@@ -13,7 +13,9 @@
 #include <ui/betting_panel.h>
 #include <ui/button.h>
 #include <ui/hand_view.h>
+#include <ui/result_badge.h>
 #include <ui/seat_view.h>
+#include <ui/table_background.h>
 
 namespace Frontend {
     class FakeGame;
@@ -38,6 +40,8 @@ namespace Frontend {
         // --- Apelate de joc ---
         std::size_t getSeatCount() const;
 
+        // Dacă e vreo carte pe drum, suma se schimbă după ce ajunge (ex. câștigul apare după
+        // ultima carte a dealerului, nu înainte).
         void setPlayerMoney(std::size_t seat, int money);
         void setPlayerBet(std::size_t seat, int bet);
         // Scorul se vede într-o bulină lângă mână; nullopt o ascunde.
@@ -63,14 +67,15 @@ namespace Frontend {
         void endBetting();
         std::optional<std::size_t> getBettingSeat() const;
 
-        // Eticheta apare deasupra mâinii după ce s-au terminat animațiile cărților.
+        // Eticheta apare deasupra mâinii după ce s-au terminat animațiile cărților; atunci
+        // jetoanele pariului pleacă spre jucător (câștig, egal) sau spre dealer (pierdere).
         void showResult(std::size_t seat, RoundResult result);
 
         // Strânge cărțile, scorurile și rezultatele și închide panoul de pariu, pentru o rundă
         // nouă. Banii și pariurile afișate rămân.
         void clearRound();
 
-        // True cât timp mai e vreo carte pe drum sau în curs de întoarcere.
+        // True cât timp se mișcă ceva: cărți, jetoane, bani sau etichetele cu rezultatul.
         bool isAnimating() const;
 
         // --- Ce a ales jucătorul la rând ---
@@ -85,6 +90,10 @@ namespace Frontend {
         sf::Vector2f seatPosition(std::size_t seat) const;
         // Cât așteaptă următoarea carte până pleacă din pachet; mută coada mai departe.
         float takeDealDelay();
+        // Cărți pe drum, în pachet sau în curs de întoarcere.
+        bool cardsInMotion() const;
+        // Când nu mai e nicio carte pe drum: aplică banii amânați și arată rezultatele.
+        void applyWhenCardsSettled();
         void refreshActionButtons();
         // Evidențiază locul jucătorului la rând sau al celui care pariază.
         void refreshSeatHighlight();
@@ -96,14 +105,15 @@ namespace Frontend {
         void drawLabel(sf::RenderTarget& target, const sf::String& text,
                        sf::Vector2f centerTop) const;
         void drawScore(sf::RenderTarget& target, const HandView& hand, int score) const;
-        void drawResult(sf::RenderTarget& target, const HandView& hand,
-                        RoundResult result) const;
 
         AppContext m_context;
+        TableBackground m_background;
         std::vector<sf::String> m_playerNames;
         std::vector<SeatView> m_seats;
         std::vector<std::optional<int>> m_scores;
-        std::vector<std::optional<RoundResult>> m_results;
+        std::vector<std::optional<ResultBadge>> m_results;
+        std::vector<std::optional<int>> m_pendingMoney;
+        bool m_resultsShown = false;  // etichetele sunt pe ecran și jetoanele au plecat
         HandView m_dealerHand;
         std::optional<int> m_dealerScore;
         std::optional<std::size_t> m_currentSeat;

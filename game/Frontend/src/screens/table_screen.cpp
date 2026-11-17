@@ -28,8 +28,7 @@ namespace Frontend {
         constexpr float kActionsLeft = (kLogicalWidth - 3 * kActionSize.x - 2 * kActionGap) / 2.f;
 
         constexpr float kScoreRadius = 17.f;
-        constexpr sf::Vector2f kResultSize{150.f, 32.f};
-        constexpr float kResultGap = 16.f;  // între etichetă și cărți
+        constexpr float kResultGap = 16.f;  // între eticheta cu rezultatul și cărți
 
         const sf::Color kGold(240, 210, 120);
 
@@ -37,41 +36,15 @@ namespace Frontend {
             return {kActionsLeft + static_cast<float>(index) * (kActionSize.x + kActionGap),
                     kActionY};
         }
-
-        const char* resultLabel(RoundResult result) {
-            switch (result) {
-                case RoundResult::Win:
-                    return "Câștig";
-                case RoundResult::Lose:
-                    return "Pierdere";
-                case RoundResult::Push:
-                    return "Egal";
-                case RoundResult::Blackjack:
-                    return "Blackjack!";
-            }
-            return "";
-        }
-
-        sf::Color resultColor(RoundResult result) {
-            switch (result) {
-                case RoundResult::Win:
-                    return sf::Color(40, 140, 60);
-                case RoundResult::Lose:
-                    return sf::Color(170, 40, 40);
-                case RoundResult::Push:
-                    return sf::Color(100, 100, 100);
-                case RoundResult::Blackjack:
-                    return sf::Color(190, 140, 20);
-            }
-            return sf::Color::Black;
-        }
     }  // namespace
 
     TableScreen::TableScreen(AppContext context, std::vector<sf::String> playerNames)
         : m_context(context),
+          m_background(context.font),
           m_playerNames(std::move(playerNames)),
           m_scores(m_playerNames.size()),
           m_results(m_playerNames.size()),
+          m_pendingMoney(m_playerNames.size()),
           m_dealerHand(context.cards),
           m_hitButton(context.font, utf8("Hit"), actionPosition(0), kActionSize),
           m_standButton(context.font, utf8("Stand"), actionPosition(1), kActionSize),
@@ -154,15 +127,22 @@ namespace Frontend {
             seat.update(dt);
         }
 
+        applyWhenCardsSettled();
+        if (m_resultsShown) {
+            for (std::optional<ResultBadge>& badge : m_results) {
+                if (badge) {
+                    badge->update(dt);
+                }
+            }
+        }
+
         if (m_game) {
             m_game->update(dt);
         }
     }
 
     void TableScreen::draw(sf::RenderTarget& target) {
-        sf::RectangleShape background({kLogicalWidth, kLogicalHeight});
-        background.setFillColor(sf::Color(15, 90, 50));
-        target.draw(background);
+        m_background.draw(target);
 
         drawDeck(target);
 
@@ -174,9 +154,6 @@ namespace Frontend {
             drawScore(target, m_dealerHand, *m_dealerScore);
         }
 
-        // Rezultatele apar abia după ce au ajuns toate cărțile, altfel s-ar vedea înainte de
-        // cartea care a decis runda.
-        const bool showResults = !isAnimating();
         for (std::size_t seat = 0; seat < m_seats.size(); ++seat) {
             const HandView& hand = m_seats[seat].getHand();
             m_seats[seat].draw(target);
@@ -184,8 +161,10 @@ namespace Frontend {
             if (m_scores[seat] && hand.getCardCount() > 0 && !hand.isAnimating()) {
                 drawScore(target, hand, *m_scores[seat]);
             }
-            if (showResults && m_results[seat]) {
-                drawResult(target, hand, *m_results[seat]);
+            // Rezultatele apar abia după ce au ajuns toate cărțile, altfel s-ar vedea înainte
+            // de cartea care a decis runda.
+            if (m_resultsShown && m_results[seat]) {
+                m_results[seat]->draw(target);
             }
         }
 
@@ -202,7 +181,12 @@ namespace Frontend {
     std::size_t TableScreen::getSeatCount() const { return m_seats.size(); }
 
     void TableScreen::setPlayerMoney(std::size_t seat, int money) {
-        m_seats.at(seat).setMoney(money);
+        if (cardsInMotion()) {
+            m_pendingMoney.at(seat) = money;
+        } else {
+            m_pendingMoney.at(seat).reset();
+            m_seats.at(seat).setMoney(money);
+        }
     }
 
     void TableScreen::setPlayerBet(std::size_t seat, int bet) { m_seats.at(seat).setBet(bet); }
@@ -267,7 +251,10 @@ namespace Frontend {
     std::optional<std::size_t> TableScreen::getBettingSeat() const { return m_bettingSeat; }
 
     void TableScreen::showResult(std::size_t seat, RoundResult result) {
-        m_results.at(seat) = result;
+        const sf::FloatRect bounds = m_seats.at(seat).getHand().getBounds();
+        ResultBadge& badge = m_results[seat].emplace(m_context.font, result);
+        badge.setPosition({bounds.position.x + bounds.size.x / 2.f,
+                           bounds.position.y - kResultGap - ResultBadge::kSize.y / 2.f});
     }
 
     void TableScreen::clearRound() {
@@ -276,6 +263,7 @@ namespace Frontend {
             m_scores[seat].reset();
             m_results[seat].reset();
         }
+        m_resultsShown = false;
         m_dealerHand.clear();
         m_dealerScore.reset();
         m_pendingReveal.reset();
@@ -285,11 +273,58 @@ namespace Frontend {
     }
 
     bool TableScreen::isAnimating() const {
+        if (cardsInMotion()) {
+            return true;
+        }
+        const auto hasValue = [](const auto& value) { return value.has_value(); };
+        const bool pendingMoney =
+            std::any_of(m_pendingMoney.begin(), m_pendingMoney.end(), hasValue);
+        const bool resultsWaiting =
+            !m_resultsShown && std::any_of(m_results.begin(), m_results.end(), hasValue);
+        const bool badgesAnimating =
+            std::any_of(m_results.begin(), m_results.end(),
+                        [](const auto& badge) { return badge && badge->isAnimating(); });
+        const bool seatsAnimating =
+            std::any_of(m_seats.begin(), m_seats.end(),
+                        [](const SeatView& seat) { return seat.isAnimating(); });
+        return pendingMoney || resultsWaiting || badgesAnimating || seatsAnimating;
+    }
+
+    bool TableScreen::cardsInMotion() const {
         if (m_dealQueue > 0.f || m_pendingReveal || m_dealerHand.isAnimating()) {
             return true;
         }
         return std::any_of(m_seats.begin(), m_seats.end(),
                            [](const SeatView& seat) { return seat.getHand().isAnimating(); });
+    }
+
+    void TableScreen::applyWhenCardsSettled() {
+        if (cardsInMotion()) {
+            return;
+        }
+
+        if (!m_resultsShown &&
+            std::any_of(m_results.begin(), m_results.end(),
+                        [](const auto& badge) { return badge.has_value(); })) {
+            m_resultsShown = true;
+            const sf::Vector2f dealerChips{kDealerPosition.x,
+                                           kDealerPosition.y + CardView::kSize.y / 2.f};
+            for (std::size_t seat = 0; seat < m_seats.size(); ++seat) {
+                if (!m_results[seat]) {
+                    continue;
+                }
+                const bool lost = m_results[seat]->getResult() == RoundResult::Lose;
+                m_seats[seat].settleBet(
+                    lost ? SeatView::ChipsTo::Dealer : SeatView::ChipsTo::Player, dealerChips);
+            }
+        }
+
+        for (std::size_t seat = 0; seat < m_seats.size(); ++seat) {
+            if (m_pendingMoney[seat]) {
+                m_seats[seat].setMoney(*m_pendingMoney[seat]);
+                m_pendingMoney[seat].reset();
+            }
+        }
     }
 
     void TableScreen::setOnHit(std::function<void()> onHit) { m_onHit = std::move(onHit); }
@@ -413,29 +448,6 @@ namespace Frontend {
         target.draw(bubble);
 
         sf::Text text(m_context.font, std::to_string(score), 18);
-        const sf::FloatRect textBounds = text.getLocalBounds();
-        text.setOrigin(textBounds.position + textBounds.size / 2.f);
-        text.setPosition(center);
-        text.setFillColor(sf::Color::White);
-        target.draw(text);
-    }
-
-    // Eticheta cu rezultatul, centrată deasupra mâinii.
-    void TableScreen::drawResult(sf::RenderTarget& target, const HandView& hand,
-                                 RoundResult result) const {
-        const sf::FloatRect bounds = hand.getBounds();
-        const sf::Vector2f center{bounds.position.x + bounds.size.x / 2.f,
-                                  bounds.position.y - kResultGap - kResultSize.y / 2.f};
-
-        sf::RectangleShape badge(kResultSize);
-        badge.setOrigin(kResultSize / 2.f);
-        badge.setPosition(center);
-        badge.setFillColor(resultColor(result));
-        badge.setOutlineColor(sf::Color::White);
-        badge.setOutlineThickness(2.f);
-        target.draw(badge);
-
-        sf::Text text(m_context.font, utf8(resultLabel(result)), 20);
         const sf::FloatRect textBounds = text.getLocalBounds();
         text.setOrigin(textBounds.position + textBounds.size / 2.f);
         text.setPosition(center);

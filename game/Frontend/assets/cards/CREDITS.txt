@@ -1,0 +1,10 @@
+Imaginile cartilor (toate in afara de back.png):
+  "Vector Playing Cards" de Byron Knoll, domeniu public.
+  https://opengameart.org/content/playing-cards-vector-png
+  Micsorate de la 500x726 la 250x363.
+
+back.png: desenat de echipa (ImageMagick).
+
+Nume fisiere: <rang>_of_<culoare>.png
+  rang:    2..10, jack, queen, king, ace
+  culoare: clubs, diamonds, hearts, spades

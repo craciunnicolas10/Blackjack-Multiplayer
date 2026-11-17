@@ -8,4 +8,5 @@ CPMAddPackage(
         "BUILD_SHARED_LIBS ON"
         "SFML_BUILD_AUDIO ON"
         "SFML_BUILD_NETWORK OFF"
+        "SFML_USE_SYSTEM_DEPS OFF"
 )

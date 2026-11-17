@@ -5,20 +5,26 @@
 #include <cstdint>
 #include <string>
 
+#include <SFML/Graphics/ConvexShape.hpp>
+
+#include <ui/crisp_text.h>
+#include <ui/shapes.h>
+#include <ui/theme.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
     namespace {
-        constexpr unsigned kNameSize = 22;
-        constexpr unsigned kInfoSize = 18;
+        constexpr unsigned kNameSize = Theme::kTextBody;
+        constexpr unsigned kInfoSize = Theme::kTextSmall;
         constexpr float kPanelPadding = 8.f;
         constexpr float kLineGap = 4.f;
         constexpr float kChipsGap = 6.f;  // între panou și teancul de jetoane
 
-        const sf::Color kGold(240, 210, 120);
-        const sf::Color kInfoColor(220, 220, 220);
-        const sf::Color kMoneyUp(130, 235, 130);
-        const sf::Color kMoneyDown(245, 120, 110);
+        // Eticheta „Peste 21!”, ștampilată peste cărți.
+        constexpr sf::Vector2f kBustSize{122.f, 32.f};
+        constexpr float kBustTopOffset = 46.f;  // față de marginea de sus a cărților
+        constexpr float kBustAngle = -8.f;      // grade
+        constexpr float kBustAppearDuration = 0.3f;
 
         void centerTextAt(sf::Text& text, sf::Vector2f centerTop) {
             const sf::FloatRect bounds = text.getLocalBounds();
@@ -30,6 +36,12 @@ namespace Frontend {
             const float inverse = 1.f - t;
             return 1.f - inverse * inverse * inverse;
         }
+
+        float easeOutBack(float t) {
+            constexpr float kOvershoot = 2.2f;
+            const float u = t - 1.f;
+            return 1.f + (kOvershoot + 1.f) * u * u * u + kOvershoot * u * u;
+        }
     }  // namespace
 
     SeatView::SeatView(const sf::Font& font, const CardTextures& textures, const sf::String& name)
@@ -38,8 +50,13 @@ namespace Frontend {
           m_panel(kPanelSize),
           m_name(font, name, kNameSize),
           m_money(font, "", kInfoSize),
-          m_bet(font, "", kInfoSize) {
+          m_bet(font, "", kInfoSize),
+          m_bustText(font, utf8("Peste 21!"), Theme::kTextSmall) {
         m_panel.setOutlineThickness(2.f);
+        m_bustText.setStyle(sf::Text::Bold);
+        m_bustText.setFillColor(Theme::kTextPrimary);
+        const sf::FloatRect bustBounds = m_bustText.getLocalBounds();
+        m_bustText.setOrigin(bustBounds.position + bustBounds.size / 2.f);
         refreshMoneyText();
         setBet(0);
         updateColors();
@@ -93,6 +110,15 @@ namespace Frontend {
         m_chips.sendTo(target);
     }
 
+    void SeatView::showBust() {
+        if (m_bustShown) {
+            return;
+        }
+        m_bustPending = true;
+    }
+
+    bool SeatView::isBustShown() const { return m_bustShown; }
+
     void SeatView::setActive(bool active) {
         m_active = active;
         m_pulseTime = 0.f;
@@ -106,13 +132,27 @@ namespace Frontend {
     const HandView& SeatView::getHand() const { return m_hand; }
 
     bool SeatView::isAnimating() const {
-        return m_hand.isAnimating() || m_chips.isAnimating() ||
+        return m_hand.isAnimating() || m_chips.isAnimating() || m_bustPending ||
                m_moneyElapsed < kMoneyAnimationDuration;
     }
 
     void SeatView::update(float dt) {
         m_hand.update(dt);
         m_chips.update(dt);
+
+        if (m_hand.getCardCount() == 0) {
+            // Cărțile s-au strâns (rundă nouă): eticheta dispare odată cu ele.
+            m_bustPending = false;
+            m_bustShown = false;
+        } else if (m_bustPending && !m_hand.isAnimating()) {
+            // Abia după ce a ajuns cartea care a trecut de 21.
+            m_bustPending = false;
+            m_bustShown = true;
+            m_bustElapsed = 0.f;
+            m_hand.shake();
+        } else if (m_bustShown) {
+            m_bustElapsed = std::min(m_bustElapsed + dt, kBustAppearDuration);
+        }
 
         if (m_moneyElapsed < kMoneyAnimationDuration) {
             m_moneyElapsed = std::min(m_moneyElapsed + dt, kMoneyAnimationDuration);
@@ -131,11 +171,46 @@ namespace Frontend {
 
     void SeatView::draw(sf::RenderTarget& target) const {
         target.draw(m_panel);
-        target.draw(m_name);
-        target.draw(m_money);
-        target.draw(m_bet);
+        drawText(target, m_name);
+        drawText(target, m_money);
+        drawText(target, m_bet);
         m_chips.draw(target);
         m_hand.draw(target);
+        if (m_bustShown) {
+            drawBust(target);
+        }
+    }
+
+    void SeatView::drawBust(sf::RenderTarget& target) const {
+        const sf::FloatRect hand = m_hand.getBounds();
+        const sf::Vector2f center{hand.position.x + hand.size.x / 2.f,
+                                  hand.position.y + kBustTopOffset};
+        const float t = m_bustElapsed / kBustAppearDuration;
+        const float scale = std::max(easeOutBack(t), 0.f);
+        if (scale <= 0.f) {
+            return;
+        }
+
+        sf::ConvexShape tag = makeRoundedRect(kBustSize, 8.f);
+        tag.setPosition(center);
+        tag.setRotation(sf::degrees(kBustAngle));
+        tag.setScale({scale, scale});
+        tag.setFillColor(Theme::kDanger);
+        tag.setOutlineColor(Theme::kTextPrimary);
+        tag.setOutlineThickness(2.f);
+
+        sf::ConvexShape shadow = tag;
+        shadow.move({2.f, 4.f});
+        shadow.setFillColor(Theme::kShadow);
+        shadow.setOutlineThickness(0.f);
+        target.draw(shadow);
+        target.draw(tag);
+
+        sf::Text text = m_bustText;
+        text.setPosition(center);
+        text.setRotation(sf::degrees(kBustAngle));
+        text.setScale({scale, scale});
+        drawText(target, text);
     }
 
     void SeatView::layoutTexts() {
@@ -154,28 +229,28 @@ namespace Frontend {
         if (m_active) {
             // Conturul auriu „respiră” ușor, ca să se vadă al cui e rândul.
             const float pulse = (std::sin(m_pulseTime * 4.f) + 1.f) / 2.f;
-            sf::Color outline = kGold;
+            sf::Color outline = Theme::kGold;
             outline.a = static_cast<std::uint8_t>(170.f + 85.f * pulse);
-            m_panel.setFillColor(sf::Color(90, 70, 15, 220));
+            m_panel.setFillColor(Theme::kSeatActiveFill);
             m_panel.setOutlineColor(outline);
             m_panel.setOutlineThickness(3.f);
-            m_name.setFillColor(kGold);
+            m_name.setFillColor(Theme::kGold);
         } else {
-            m_panel.setFillColor(sf::Color(0, 0, 0, 110));
-            m_panel.setOutlineColor(sf::Color(255, 255, 255, 50));
+            m_panel.setFillColor(Theme::kSeatFill);
+            m_panel.setOutlineColor(Theme::kSeatOutline);
             m_panel.setOutlineThickness(2.f);
-            m_name.setFillColor(sf::Color::White);
+            m_name.setFillColor(Theme::kTextPrimary);
         }
-        m_bet.setFillColor(kInfoColor);
+        m_bet.setFillColor(Theme::kTextSecondary);
     }
 
     void SeatView::refreshMoneyText() {
         m_money.setString(utf8("Bani: " + std::to_string(m_moneyShown)));
         // Cât timp suma se schimbă: verde când crește, roșu când scade.
         if (m_moneyElapsed < kMoneyAnimationDuration && m_moneyTarget != m_moneyFrom) {
-            m_money.setFillColor(m_moneyTarget > m_moneyFrom ? kMoneyUp : kMoneyDown);
+            m_money.setFillColor(m_moneyTarget > m_moneyFrom ? Theme::kPositive : Theme::kNegative);
         } else {
-            m_money.setFillColor(kInfoColor);
+            m_money.setFillColor(Theme::kTextSecondary);
         }
         layoutTexts();
     }

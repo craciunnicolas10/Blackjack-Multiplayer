@@ -6,6 +6,7 @@
 #include <audio/sound_player.h>
 #include <screens/screen_manager.h>
 #include <ui/card_textures.h>
+#include <ui/mute_icon.h>
 
 namespace Frontend {
     class Application {
@@ -28,10 +29,13 @@ namespace Frontend {
         void configureWindow();
 
         void mainLoop();
+        // Ecranul curent primește text (ex. un nume): tastele cu litere nu sunt scurtături.
+        bool isTypingText() const;
 
         sf::Font m_font;
         CardTextures m_cardTextures;
         SoundPlayer m_sounds;
+        MuteIcon m_muteIcon;
         sf::Image m_icon;
         bool m_fullscreen = false;
         std::unique_ptr<sf::RenderWindow> m_window;

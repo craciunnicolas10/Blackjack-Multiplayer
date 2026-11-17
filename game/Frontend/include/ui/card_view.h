@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SFML/Graphics/RenderStates.hpp>
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/System/Vector2.hpp>
 
@@ -47,7 +48,9 @@ namespace Frontend {
 
         bool isAnimating() const;
         void update(float dt);
-        void draw(sf::RenderTarget& target) const;
+        // `states` permite, de exemplu, mutarea întregii mâini (scuturarea din HandView).
+        void draw(sf::RenderTarget& target,
+                  sf::RenderStates states = sf::RenderStates::Default) const;
 
        private:
         const CardTextures* m_textures;

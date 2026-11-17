@@ -3,6 +3,8 @@
 #include <cmath>
 #include <utility>
 
+#include <ui/crisp_text.h>
+
 namespace Frontend {
     namespace {
         constexpr unsigned kCharacterSize = 26;
@@ -100,9 +102,9 @@ namespace Frontend {
     void TextInput::draw(sf::RenderTarget& target) const {
         target.draw(m_box);
         if (m_value.isEmpty() && !m_focused) {
-            target.draw(m_placeholder);
+            drawText(target, m_placeholder);
         } else {
-            target.draw(m_text);
+            drawText(target, m_text);
         }
 
         if (m_focused && m_blinkTimer < kBlinkPeriod / 2.f) {

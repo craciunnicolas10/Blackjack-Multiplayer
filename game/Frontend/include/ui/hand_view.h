@@ -46,6 +46,10 @@ namespace Frontend {
         // Dreptunghiul ocupat de cărți după ce își termină animațiile.
         sf::FloatRect getBounds() const;
 
+        // O scuturare scurtă pe orizontală (ex. când mâna trece de 21).
+        void shake();
+        bool isShaking() const;
+
         bool isAnimating() const;
         void update(float dt);
         void draw(sf::RenderTarget& target) const;
@@ -59,5 +63,6 @@ namespace Frontend {
         const CardTextures* m_textures;
         sf::Vector2f m_position;
         std::vector<CardView> m_cards;
+        float m_shakeTime = -1.f;  // < 0 = nu se scutură
     };
 }  // namespace Frontend

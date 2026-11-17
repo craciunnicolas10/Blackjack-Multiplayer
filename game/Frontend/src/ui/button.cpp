@@ -2,10 +2,19 @@
 
 #include <utility>
 
+#include <ui/crisp_text.h>
+#include <ui/theme.h>
+
 namespace Frontend {
+    namespace {
+        constexpr float kHintMargin = 6.f;  // între indiciu și colțul butonului
+    }  // namespace
+
     Button::Button(const sf::Font& font, const sf::String& label, sf::Vector2f position,
                    sf::Vector2f size)
-        : m_shape(size), m_text(font, label, 26) {
+        : m_shape(size),
+          m_text(font, label, Theme::kTextButton),
+          m_hint(font, "", Theme::kTextTiny) {
         m_shape.setPosition(position);
         m_shape.setOutlineThickness(2.f);
 
@@ -28,9 +37,20 @@ namespace Frontend {
 
     bool Button::isEnabled() const { return m_enabled; }
 
+    void Button::setHint(const sf::String& hint) {
+        m_hint.setString(hint);
+        // Aliniat la colțul din dreapta-jos.
+        const sf::FloatRect bounds = m_hint.getLocalBounds();
+        m_hint.setOrigin(bounds.position + bounds.size);
+        m_hint.setPosition(m_shape.getPosition() + m_shape.getSize() -
+                           sf::Vector2f{kHintMargin, kHintMargin});
+        updateColors();
+    }
+
     void Button::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
         if (const auto* moved = event.getIf<sf::Event::MouseMoved>()) {
-            m_hovered = m_shape.getGlobalBounds().contains(window.mapPixelToCoords(moved->position));
+            m_hovered =
+                m_shape.getGlobalBounds().contains(window.mapPixelToCoords(moved->position));
         } else if (const auto* pressed = event.getIf<sf::Event::MouseButtonPressed>()) {
             if (pressed->button == sf::Mouse::Button::Left && m_enabled) {
                 m_hovered =
@@ -39,9 +59,9 @@ namespace Frontend {
             }
         } else if (const auto* released = event.getIf<sf::Event::MouseButtonReleased>()) {
             if (released->button == sf::Mouse::Button::Left) {
-                const bool clicked = m_pressed && m_enabled &&
-                                     m_shape.getGlobalBounds().contains(
-                                         window.mapPixelToCoords(released->position));
+                const bool clicked =
+                    m_pressed && m_enabled &&
+                    m_shape.getGlobalBounds().contains(window.mapPixelToCoords(released->position));
                 m_pressed = false;
                 if (clicked && m_onClick) {
                     m_onClick();
@@ -53,25 +73,33 @@ namespace Frontend {
 
     void Button::draw(sf::RenderTarget& target) const {
         target.draw(m_shape);
-        target.draw(m_text);
+        drawText(target, m_text);
+        if (!m_hint.getString().isEmpty()) {
+            drawText(target, m_hint);
+        }
     }
 
     void Button::updateColors() {
         if (!m_enabled) {
-            m_shape.setFillColor(sf::Color(60, 60, 60));
-            m_shape.setOutlineColor(sf::Color(90, 90, 90));
-            m_text.setFillColor(sf::Color(130, 130, 130));
+            m_shape.setFillColor(Theme::kButtonDisabledFill);
+            m_shape.setOutlineColor(Theme::kButtonDisabledOutline);
+            m_text.setFillColor(Theme::kButtonDisabledText);
+            m_hint.setFillColor(Theme::kButtonDisabledText);
             return;
         }
 
         if (m_pressed) {
-            m_shape.setFillColor(sf::Color(150, 110, 20));
+            m_shape.setFillColor(Theme::kButtonPressed);
         } else if (m_hovered) {
-            m_shape.setFillColor(sf::Color(200, 150, 30));
+            m_shape.setFillColor(Theme::kButtonHover);
         } else {
-            m_shape.setFillColor(sf::Color(170, 125, 25));
+            m_shape.setFillColor(Theme::kButtonFill);
         }
-        m_shape.setOutlineColor(sf::Color(240, 210, 120));
-        m_text.setFillColor(sf::Color::White);
+        m_shape.setOutlineColor(Theme::kGold);
+        m_text.setFillColor(Theme::kTextPrimary);
+        // Indiciul e mai discret decât textul principal.
+        sf::Color hint = Theme::kTextPrimary;
+        hint.a = 170;
+        m_hint.setFillColor(hint);
     }
 }  // namespace Frontend

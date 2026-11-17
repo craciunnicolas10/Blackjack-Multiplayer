@@ -12,5 +12,9 @@ namespace Frontend {
         virtual void handleEvent(const sf::Event& /*event*/) {}
         virtual void update(float /*dt*/) {}
         virtual void draw(sf::RenderTarget& target) = 0;
+
+        // True cât timp utilizatorul scrie text (ex. un nume). Atunci tastele cu litere
+        // (ex. M = sunet pornit/oprit) nu mai sunt scurtături globale.
+        virtual bool isTypingText() const { return false; }
     };
 }  // namespace Frontend

@@ -48,6 +48,11 @@ namespace Frontend {
         // și dispar. Textul „Pariu” rămâne până la următorul setBet.
         void settleBet(ChipsTo destination, sf::Vector2f dealerPosition);
 
+        // Jucătorul a trecut de 21: după ce ajunge ultima carte, mâna se scutură și peste cărți
+        // apare eticheta „Peste 21!”. Dispare singură când se strâng cărțile (rundă nouă).
+        void showBust();
+        bool isBustShown() const;
+
         void setActive(bool active);
         bool isActive() const;
 
@@ -63,6 +68,7 @@ namespace Frontend {
         void layoutTexts();
         void updateColors();
         void refreshMoneyText();
+        void drawBust(sf::RenderTarget& target) const;
 
         sf::Vector2f m_position;
         HandView m_hand;
@@ -71,8 +77,13 @@ namespace Frontend {
         sf::Text m_name;
         sf::Text m_money;
         sf::Text m_bet;
+        sf::Text m_bustText;
         bool m_active = false;
         float m_pulseTime = 0.f;
+
+        bool m_bustPending = false;  // cerută, așteaptă să ajungă cartea
+        bool m_bustShown = false;
+        float m_bustElapsed = 0.f;
 
         // Animația banilor: suma afișată merge de la `m_moneyFrom` la `m_moneyTarget`.
         bool m_moneyKnown = false;

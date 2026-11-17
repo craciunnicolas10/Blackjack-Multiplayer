@@ -1,50 +1,25 @@
 #include <ui/result_badge.h>
 
 #include <algorithm>
-#include <cmath>
 #include <cstdint>
-#include <numbers>
 
 #include <SFML/Graphics/ConvexShape.hpp>
 
 #include <audio/sound_player.h>
+#include <ui/crisp_text.h>
+#include <ui/shapes.h>
+#include <ui/theme.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
     namespace {
         constexpr float kCornerRadius = 10.f;
-        constexpr int kCornerPoints = 6;  // puncte pe fiecare colț rotunjit
 
         // Depășește puțin 1 și revine, ca o etichetă care „sare” la locul ei.
         float easeOutBack(float t) {
             constexpr float kOvershoot = 1.9f;
             const float u = t - 1.f;
             return 1.f + (kOvershoot + 1.f) * u * u * u + kOvershoot * u * u;
-        }
-
-        // Dreptunghi cu colțuri rotunjite, centrat în (0, 0).
-        sf::ConvexShape roundedRect(sf::Vector2f size, float radius) {
-            sf::ConvexShape shape(4 * kCornerPoints);
-            const sf::Vector2f half = size / 2.f;
-            const sf::Vector2f centers[4] = {{half.x - radius, -half.y + radius},
-                                             {half.x - radius, half.y - radius},
-                                             {-half.x + radius, half.y - radius},
-                                             {-half.x + radius, -half.y + radius}};
-            std::size_t index = 0;
-            for (int corner = 0; corner < 4; ++corner) {
-                // Fiecare colț acoperă un sfert de cerc, în ordinea acelor de ceasornic.
-                const float start = -std::numbers::pi_v<float> / 2.f +
-                                    static_cast<float>(corner) * std::numbers::pi_v<float> / 2.f;
-                for (int i = 0; i < kCornerPoints; ++i) {
-                    const float angle = start + (std::numbers::pi_v<float> / 2.f) *
-                                                    static_cast<float>(i) /
-                                                    static_cast<float>(kCornerPoints - 1);
-                    shape.setPoint(
-                        index++,
-                        centers[corner] + sf::Vector2f{std::cos(angle), std::sin(angle)} * radius);
-                }
-            }
-            return shape;
         }
 
         sf::Color withAlpha(sf::Color color, float alpha) {
@@ -94,20 +69,20 @@ namespace Frontend {
             return;
         }
 
-        sf::ConvexShape badge = roundedRect(kSize, kCornerRadius);
+        sf::ConvexShape badge = makeRoundedRect(kSize, kCornerRadius);
         badge.setPosition(m_position);
         badge.setScale({scale, scale});
         badge.setFillColor(withAlpha(m_color, alpha));
         // Blackjack primește contur auriu; restul, alb.
         const sf::Color outline =
-            m_result == RoundResult::Blackjack ? sf::Color(255, 225, 130) : sf::Color::White;
+            m_result == RoundResult::Blackjack ? Theme::kGoldBright : Theme::kTextPrimary;
         badge.setOutlineColor(withAlpha(outline, alpha));
         badge.setOutlineThickness(2.f);
 
         // Umbra, puțin mai jos.
         sf::ConvexShape shadow = badge;
         shadow.setPosition(m_position + sf::Vector2f{0.f, 3.f});
-        shadow.setFillColor(withAlpha(sf::Color(0, 0, 0, 90), alpha));
+        shadow.setFillColor(withAlpha(Theme::kShadow, alpha));
         shadow.setOutlineThickness(0.f);
         target.draw(shadow);
         target.draw(badge);
@@ -115,7 +90,7 @@ namespace Frontend {
         sf::Text text = m_text;
         text.setPosition(m_position);
         text.setScale({scale, scale});
-        text.setFillColor(withAlpha(sf::Color::White, alpha));
-        target.draw(text);
+        text.setFillColor(withAlpha(Theme::kTextPrimary, alpha));
+        drawText(target, text);
     }
 }  // namespace Frontend

@@ -9,6 +9,9 @@
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Text.hpp>
 
+#include <ui/crisp_text.h>
+#include <ui/theme.h>
+
 namespace Frontend {
     namespace {
         constexpr int kStripeCount = 8;  // dungile de pe margine
@@ -28,7 +31,7 @@ namespace Frontend {
                     return {sf::Color(185, 30, 40), sf::Color(235, 235, 235),
                             sf::Color(210, 55, 60)};
                 case 100:
-                    return {sf::Color(25, 25, 25), sf::Color(240, 210, 120), sf::Color(50, 50, 50)};
+                    return {sf::Color(25, 25, 25), Theme::kGold, sf::Color(50, 50, 50)};
                 default:
                     return {sf::Color(30, 130, 70), sf::Color(235, 235, 235),
                             sf::Color(50, 155, 90)};
@@ -66,7 +69,7 @@ namespace Frontend {
         sf::CircleShape shadow(radius);
         shadow.setOrigin({radius, radius});
         shadow.setPosition(m_position + sf::Vector2f{0.f, radius * 0.12f});
-        shadow.setFillColor(adjust(sf::Color(0, 0, 0, 90)));
+        shadow.setFillColor(adjust(Theme::kShadow));
         target.draw(shadow);
 
         sf::CircleShape base(radius);
@@ -107,8 +110,8 @@ namespace Frontend {
         const sf::FloatRect bounds = text.getLocalBounds();
         text.setOrigin(bounds.position + bounds.size / 2.f);
         text.setPosition(m_position);
-        text.setFillColor(adjust(sf::Color::White));
-        target.draw(text);
+        text.setFillColor(adjust(Theme::kTextPrimary));
+        drawText(target, text);
     }
 
     sf::Color ChipView::adjust(sf::Color color) const {

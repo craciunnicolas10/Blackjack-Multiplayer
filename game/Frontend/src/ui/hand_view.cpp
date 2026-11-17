@@ -1,11 +1,19 @@
 #include <ui/hand_view.h>
 
 #include <algorithm>
+#include <cmath>
+#include <numbers>
 #include <utility>
 
 #include <audio/sound_player.h>
 
 namespace Frontend {
+    namespace {
+        constexpr float kShakeDuration = 0.45f;  // secunde
+        constexpr float kShakeAmplitude = 9.f;   // pixeli logici
+        constexpr float kShakeFrequency = 9.f;   // mișcări stânga-dreapta pe secundă
+    }  // namespace
+
     HandView::HandView(const CardTextures& textures) : m_textures(&textures) {}
 
     void HandView::setPosition(sf::Vector2f centerTop) {
@@ -41,7 +49,10 @@ namespace Frontend {
         }
     }
 
-    void HandView::clear() { m_cards.clear(); }
+    void HandView::clear() {
+        m_cards.clear();
+        m_shakeTime = -1.f;
+    }
 
     std::size_t HandView::getCardCount() const { return m_cards.size(); }
 
@@ -59,12 +70,22 @@ namespace Frontend {
         return {topLeft, {width, CardView::kSize.y}};
     }
 
+    void HandView::shake() { m_shakeTime = 0.f; }
+
+    bool HandView::isShaking() const { return m_shakeTime >= 0.f; }
+
     bool HandView::isAnimating() const {
-        return std::any_of(m_cards.begin(), m_cards.end(),
-                           [](const CardView& card) { return card.isAnimating(); });
+        return isShaking() || std::any_of(m_cards.begin(), m_cards.end(),
+                                          [](const CardView& card) { return card.isAnimating(); });
     }
 
     void HandView::update(float dt) {
+        if (m_shakeTime >= 0.f) {
+            m_shakeTime += dt;
+            if (m_shakeTime >= kShakeDuration) {
+                m_shakeTime = -1.f;
+            }
+        }
         for (CardView& card : m_cards) {
             const bool wasWaiting = card.isWaitingInDeck();
             card.update(dt);
@@ -76,9 +97,19 @@ namespace Frontend {
     }
 
     void HandView::draw(sf::RenderTarget& target) const {
+        sf::RenderStates states;
+        if (m_shakeTime >= 0.f) {
+            // Stânga-dreapta, tot mai slab spre final.
+            const float t = m_shakeTime / kShakeDuration;
+            const float fade = (1.f - t) * (1.f - t);
+            const float offset =
+                kShakeAmplitude * fade *
+                std::sin(2.f * std::numbers::pi_v<float> * kShakeFrequency * m_shakeTime);
+            states.transform.translate({offset, 0.f});
+        }
         // În ordine: ultima carte e deasupra celorlalte.
         for (const CardView& card : m_cards) {
-            card.draw(target);
+            card.draw(target, states);
         }
     }
 

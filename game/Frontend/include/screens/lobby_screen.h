@@ -23,6 +23,7 @@ namespace Frontend {
         void handleEvent(const sf::Event& event) override;
         void update(float dt) override;
         void draw(sf::RenderTarget& target) override;
+        bool isTypingText() const override { return m_nameInput.isFocused(); }
 
        private:
         // Butoanele doar marchează ce s-a cerut; modificăm lista după ce s-a terminat

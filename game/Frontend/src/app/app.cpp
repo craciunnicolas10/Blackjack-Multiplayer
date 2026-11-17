@@ -34,6 +34,9 @@ namespace Frontend {
         }
         initializeWindowIcon();
         initializeSounds();
+        // Colțul din dreapta-jos e liber pe toate ecranele.
+        m_muteIcon.setPosition(
+            {kLogicalWidth - MuteIcon::kRadius - 14.f, kLogicalHeight - MuteIcon::kRadius - 14.f});
         return true;
     }
 
@@ -117,6 +120,9 @@ namespace Frontend {
                 } else if (const auto* key = event->getIf<sf::Event::KeyPressed>();
                            key && key->code == sf::Keyboard::Key::F11) {
                     toggleFullscreen();
+                } else if (key && key->code == sf::Keyboard::Key::M && !isTypingText()) {
+                    // M pornește/oprește sunetul, dar nu cât timp se scrie un nume.
+                    m_sounds.toggleMuted();
                 } else if (Screen* screen = m_screens.current()) {
                     screen->handleEvent(*event);
                 }
@@ -138,7 +144,15 @@ namespace Frontend {
             if (screen) {
                 screen->draw(*m_window);
             }
+            if (m_sounds.isMuted()) {
+                m_muteIcon.draw(*m_window);
+            }
             m_window->display();
         }
+    }
+
+    bool Application::isTypingText() const {
+        const Screen* screen = m_screens.current();
+        return screen && screen->isTypingText();
     }
 }  // namespace Frontend

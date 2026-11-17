@@ -9,6 +9,7 @@
 #include <SFML/Graphics/Texture.hpp>
 
 #include <ui/card_textures.h>
+#include <ui/theme.h>
 
 namespace Frontend {
     namespace {
@@ -132,7 +133,7 @@ namespace Frontend {
         }
     }
 
-    void CardView::draw(sf::RenderTarget& target) const {
+    void CardView::draw(sf::RenderTarget& target, sf::RenderStates states) const {
         // Cât timp așteaptă în pachet să fie împărțită, cartea stă cu spatele în sus, ca să nu
         // se vadă dinainte ce urmează.
         const bool waitingInDeck = isWaitingInDeck();
@@ -162,13 +163,15 @@ namespace Frontend {
         sf::RectangleShape shadow(shadowSize);
         shadow.setOrigin(shadowSize / 2.f);
         shadow.setPosition(m_position + kSize / 2.f + shadowOffset);
-        shadow.setFillColor(sf::Color(0, 0, 0, shadowAlpha));
-        target.draw(shadow);
+        sf::Color shadowColor = Theme::kShadow;
+        shadowColor.a = shadowAlpha;
+        shadow.setFillColor(shadowColor);
+        target.draw(shadow, states);
 
         sf::Sprite sprite(texture);
         sprite.setOrigin(textureSize / 2.f);
         sprite.setScale({kSize.x / textureSize.x * widthFactor, kSize.y / textureSize.y});
         sprite.setPosition(m_position + kSize / 2.f);
-        target.draw(sprite);
+        target.draw(sprite, states);
     }
 }  // namespace Frontend

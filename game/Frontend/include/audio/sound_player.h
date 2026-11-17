@@ -28,6 +28,11 @@ namespace Frontend {
         void play(SoundId id);
         void setVolume(float volume);  // 0–100
 
+        // Fără sunet (tasta M). Sunetele care se aud deja se opresc imediat.
+        void setMuted(bool muted);
+        bool isMuted() const;
+        void toggleMuted();
+
        private:
         static constexpr std::size_t kSoundCount = 3;
         static constexpr std::size_t kVoices = 16;  // câte sunete pot suna în același timp
@@ -40,6 +45,7 @@ namespace Frontend {
         std::array<float, kSoundCount> m_lastPlayed{};
         sf::Clock m_clock;
         float m_volume = 70.f;
+        bool m_muted = false;
     };
 
     // Cântă prin SoundPlayer-ul aplicației, dacă există.

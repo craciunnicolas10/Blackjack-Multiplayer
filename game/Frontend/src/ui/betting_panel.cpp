@@ -5,6 +5,8 @@
 #include <utility>
 
 #include <audio/sound_player.h>
+#include <ui/crisp_text.h>
+#include <ui/theme.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
@@ -16,8 +18,6 @@ namespace Frontend {
         constexpr sf::Vector2f kConfirmSize{220.f, 52.f};
         constexpr float kChipsCenterY = 176.f;  // față de marginea de sus a panoului
         constexpr float kConfirmY = 218.f;
-
-        const sf::Color kGold(240, 210, 120);
 
         void centerTextAt(sf::Text& text, sf::Vector2f center) {
             const sf::FloatRect bounds = text.getLocalBounds();
@@ -51,21 +51,21 @@ namespace Frontend {
     BettingPanel::BettingPanel(const sf::Font& font, sf::Vector2f position)
         : m_position(position),
           m_background(kSize),
-          m_title(font, "", 28),
-          m_amount(font, "", 34),
+          m_title(font, "", Theme::kTextHeading),
+          m_amount(font, "", Theme::kTextLarge),
           m_info(font, "", 20),
           m_clearButton(font, utf8("Șterge"), clearPosition(position), kClearSize),
           m_confirmButton(font, utf8("Confirmă"),
                           {position.x + (kSize.x - kConfirmSize.x) / 2.f, position.y + kConfirmY},
                           kConfirmSize) {
         m_background.setPosition(position);
-        m_background.setFillColor(sf::Color(10, 40, 22, 235));
-        m_background.setOutlineColor(kGold);
+        m_background.setFillColor(Theme::kPanelFill);
+        m_background.setOutlineColor(Theme::kGold);
         m_background.setOutlineThickness(3.f);
 
-        m_title.setFillColor(sf::Color::White);
-        m_amount.setFillColor(kGold);
-        m_info.setFillColor(sf::Color(190, 190, 190));
+        m_title.setFillColor(Theme::kTextPrimary);
+        m_amount.setFillColor(Theme::kGold);
+        m_info.setFillColor(Theme::kTextMuted);
 
         for (std::size_t i = 0; i < kChipValues.size(); ++i) {
             const int value = kChipValues[i];
@@ -114,9 +114,9 @@ namespace Frontend {
 
     void BettingPanel::draw(sf::RenderTarget& target) const {
         target.draw(m_background);
-        target.draw(m_title);
-        target.draw(m_amount);
-        target.draw(m_info);
+        drawText(target, m_title);
+        drawText(target, m_amount);
+        drawText(target, m_info);
         for (const ChipButton& chip : m_chipButtons) {
             chip.draw(target);
         }

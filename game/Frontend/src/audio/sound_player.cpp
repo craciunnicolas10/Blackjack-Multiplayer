@@ -123,7 +123,7 @@ namespace Frontend {
 
     void SoundPlayer::play(SoundId id) {
         const std::size_t index = indexOf(id);
-        if (index >= kSoundCount || m_voices.empty()) {
+        if (m_muted || index >= kSoundCount || m_voices.empty()) {
             return;
         }
 
@@ -145,6 +145,19 @@ namespace Frontend {
     }
 
     void SoundPlayer::setVolume(float volume) { m_volume = std::clamp(volume, 0.f, 100.f); }
+
+    void SoundPlayer::setMuted(bool muted) {
+        m_muted = muted;
+        if (m_muted) {
+            for (sf::Sound& voice : m_voices) {
+                voice.stop();
+            }
+        }
+    }
+
+    bool SoundPlayer::isMuted() const { return m_muted; }
+
+    void SoundPlayer::toggleMuted() { setMuted(!m_muted); }
 
     void playSound(SoundId id) {
         if (g_activePlayer) {

@@ -3,8 +3,8 @@
 #include <memory>
 
 #include <app/layout.h>
+#include <screens/lobby_screen.h>
 #include <screens/screen_manager.h>
-#include <screens/table_screen.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
@@ -31,7 +31,7 @@ namespace Frontend {
 
         Button play(context.font, utf8("Joacă"), {buttonX, 360.f}, buttonSize);
         play.setOnClick([context] {
-            context.screens.change(std::make_unique<TableScreen>(context));
+            context.screens.change(std::make_unique<LobbyScreen>(context));
         });
         m_buttons.push_back(std::move(play));
 

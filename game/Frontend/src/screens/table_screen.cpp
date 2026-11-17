@@ -1,8 +1,7 @@
 #include <screens/table_screen.h>
 
-#include <array>
 #include <memory>
-#include <string>
+#include <utility>
 
 #include <app/layout.h>
 #include <screens/menu_screen.h>
@@ -15,15 +14,11 @@ namespace Frontend {
         constexpr float kCardOffset = 40.f;  // cât e mutată fiecare carte față de cea dinainte
 
         constexpr sf::Vector2f kDealerPosition{kLogicalWidth / 2.f, 70.f};
-        constexpr std::array<sf::Vector2f, 4> kSeatPositions{{
-            {200.f, 380.f},
-            {493.f, 410.f},
-            {787.f, 410.f},
-            {1080.f, 380.f},
-        }};
+        constexpr float kSeatY = 400.f;
     }  // namespace
 
-    TableScreen::TableScreen(AppContext context) : m_context(context) {
+    TableScreen::TableScreen(AppContext context, std::vector<sf::String> playerNames)
+        : m_context(context), m_playerNames(std::move(playerNames)) {
         const sf::Vector2f actionSize{150.f, 56.f};
         const float actionY = kLogicalHeight - actionSize.y - 24.f;
         const float actionsWidth = 3 * actionSize.x + 2 * 20.f;
@@ -70,15 +65,14 @@ namespace Frontend {
         drawCardPlaceholder(target, {dealerX, kDealerPosition.y}, false);
         drawCardPlaceholder(target, {dealerX + kCardOffset, kDealerPosition.y}, true);
 
-        // Cele 4 locuri ale jucătorilor.
-        for (std::size_t seat = 0; seat < kSeatPositions.size(); ++seat) {
-            const sf::Vector2f center = kSeatPositions.at(seat);
+        // Câte un loc pentru fiecare jucător, cu numele din lobby.
+        for (std::size_t seat = 0; seat < m_playerNames.size(); ++seat) {
+            const sf::Vector2f center = seatPosition(seat);
             const float handWidth = kCardSize.x + kCardOffset;
             const float handX = center.x - handWidth / 2.f;
             drawCardPlaceholder(target, {handX, center.y}, false);
             drawCardPlaceholder(target, {handX + kCardOffset, center.y}, false);
-            drawLabel(target, utf8("Loc " + std::to_string(seat + 1)),
-                      {center.x, center.y + kCardSize.y + 10.f});
+            drawLabel(target, m_playerNames.at(seat), {center.x, center.y + kCardSize.y + 10.f});
         }
 
         for (const Button& button : m_actionButtons) {
@@ -87,6 +81,12 @@ namespace Frontend {
         for (const Button& button : m_otherButtons) {
             button.draw(target);
         }
+    }
+
+    // Locurile sunt împărțite egal pe lățimea mesei, oricâți jucători ar fi.
+    sf::Vector2f TableScreen::seatPosition(std::size_t seat) const {
+        const float slots = static_cast<float>(m_playerNames.size() + 1);
+        return {kLogicalWidth * static_cast<float>(seat + 1) / slots, kSeatY};
     }
 
     // TODO(C): înlocuiește cu CardView când e gata.

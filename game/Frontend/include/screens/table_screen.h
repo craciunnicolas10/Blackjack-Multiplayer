@@ -9,16 +9,17 @@
 #include <ui/button.h>
 
 namespace Frontend {
-    // Masa de joc. Deocamdată arată doar layout-ul: zona dealerului, 4 locuri și butoanele.
-    // Cărțile sunt dreptunghiuri gri până vine CardView (persoana C).
+    // Masa de joc. Deocamdată arată doar layout-ul: zona dealerului, câte un loc pentru fiecare
+    // jucător din lobby și butoanele. Cărțile sunt dreptunghiuri până vine CardView (persoana C).
     class TableScreen : public Screen {
        public:
-        explicit TableScreen(AppContext context);
+        TableScreen(AppContext context, std::vector<sf::String> playerNames);
 
         void handleEvent(const sf::Event& event) override;
         void draw(sf::RenderTarget& target) override;
 
        private:
+        sf::Vector2f seatPosition(std::size_t seat) const;
         void drawCardPlaceholder(sf::RenderTarget& target, sf::Vector2f position,
                                  bool faceDown) const;
         void drawLabel(sf::RenderTarget& target, const sf::String& text,
@@ -26,6 +27,7 @@ namespace Frontend {
         void goToMenu();
 
         AppContext m_context;
+        std::vector<sf::String> m_playerNames;
         std::vector<Button> m_actionButtons;  // Hit, Stand, Double
         std::vector<Button> m_otherButtons;   // Meniu
     };

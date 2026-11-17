@@ -69,15 +69,17 @@ namespace Frontend {
 
     TableScreen::TableScreen(AppContext context, std::vector<sf::String> playerNames)
         : m_context(context),
-          m_scores(playerNames.size()),
-          m_results(playerNames.size()),
+          m_playerNames(std::move(playerNames)),
+          m_scores(m_playerNames.size()),
+          m_results(m_playerNames.size()),
           m_dealerHand(context.cards),
           m_hitButton(context.font, utf8("Hit"), actionPosition(0), kActionSize),
           m_standButton(context.font, utf8("Stand"), actionPosition(1), kActionSize),
           m_doubleButton(context.font, utf8("Double"), actionPosition(2), kActionSize),
-          m_menuButton(context.font, utf8("Meniu"), {24.f, 24.f}, {140.f, 48.f}) {
-        m_seats.reserve(playerNames.size());
-        for (const sf::String& name : playerNames) {
+          m_menuButton(context.font, utf8("Meniu"), {24.f, 24.f}, {140.f, 48.f}),
+          m_bettingPanel(context.font, {(kLogicalWidth - BettingPanel::kSize.x) / 2.f, 80.f}) {
+        m_seats.reserve(m_playerNames.size());
+        for (const sf::String& name : m_playerNames) {
             m_seats.emplace_back(context.font, context.cards, name);
         }
         for (std::size_t seat = 0; seat < m_seats.size(); ++seat) {
@@ -89,6 +91,7 @@ namespace Frontend {
         m_standButton.setOnClick([this] { requestAction(Action::Stand); });
         m_doubleButton.setOnClick([this] { requestAction(Action::DoubleDown); });
         m_menuButton.setOnClick([this] { m_menuRequested = true; });
+        m_bettingPanel.setOnConfirm([this](int bet) { m_pendingBet = bet; });
         refreshActionButtons();
 
         m_game = std::make_unique<FakeGame>(*this);
@@ -122,6 +125,9 @@ namespace Frontend {
         m_standButton.handleEvent(event, m_context.window);
         m_doubleButton.handleEvent(event, m_context.window);
         m_menuButton.handleEvent(event, m_context.window);
+        if (m_bettingSeat) {
+            m_bettingPanel.handleEvent(event, m_context.window);
+        }
 
         applyPendingActions();
     }
@@ -174,7 +180,8 @@ namespace Frontend {
         for (std::size_t seat = 0; seat < m_seats.size(); ++seat) {
             const HandView& hand = m_seats[seat].getHand();
             m_seats[seat].draw(target);
-            if (m_scores[seat] && hand.getCardCount() > 0) {
+            // Scorul apare după ce ajung cărțile, ca să nu arate o carte care e încă pe drum.
+            if (m_scores[seat] && hand.getCardCount() > 0 && !hand.isAnimating()) {
                 drawScore(target, hand, *m_scores[seat]);
             }
             if (showResults && m_results[seat]) {
@@ -186,6 +193,10 @@ namespace Frontend {
         m_standButton.draw(target);
         m_doubleButton.draw(target);
         m_menuButton.draw(target);
+
+        if (m_bettingSeat) {
+            m_bettingPanel.draw(target);
+        }
     }
 
     std::size_t TableScreen::getSeatCount() const { return m_seats.size(); }
@@ -228,17 +239,32 @@ namespace Frontend {
         if (seat && *seat >= m_seats.size()) {
             seat.reset();
         }
-        if (m_currentSeat) {
-            m_seats[*m_currentSeat].setActive(false);
-        }
         m_currentSeat = seat;
-        if (m_currentSeat) {
-            m_seats[*m_currentSeat].setActive(true);
-        }
+        refreshSeatHighlight();
         refreshActionButtons();
     }
 
     std::optional<std::size_t> TableScreen::getCurrentSeat() const { return m_currentSeat; }
+
+    void TableScreen::startBetting(std::size_t seat, int money, int minBet, int maxBet,
+                                   int initialBet) {
+        if (seat >= m_seats.size()) {
+            return;
+        }
+        m_bettingSeat = seat;
+        m_bettingPanel.open(m_playerNames[seat], money, minBet, maxBet, initialBet);
+        refreshSeatHighlight();
+        refreshActionButtons();
+    }
+
+    void TableScreen::endBetting() {
+        m_bettingSeat.reset();
+        m_pendingBet.reset();
+        refreshSeatHighlight();
+        refreshActionButtons();
+    }
+
+    std::optional<std::size_t> TableScreen::getBettingSeat() const { return m_bettingSeat; }
 
     void TableScreen::showResult(std::size_t seat, RoundResult result) {
         m_results.at(seat) = result;
@@ -254,6 +280,7 @@ namespace Frontend {
         m_dealerScore.reset();
         m_pendingReveal.reset();
         m_dealQueue = 0.f;
+        endBetting();
         setCurrentSeat(std::nullopt);
     }
 
@@ -275,6 +302,8 @@ namespace Frontend {
         m_onDoubleDown = std::move(onDoubleDown);
     }
 
+    void TableScreen::setOnBet(std::function<void(int)> onBet) { m_onBet = std::move(onBet); }
+
     // Locurile sunt împărțite egal pe lățimea mesei, oricâți jucători ar fi.
     sf::Vector2f TableScreen::seatPosition(std::size_t seat) const {
         const float slots = static_cast<float>(m_seats.size() + 1);
@@ -288,12 +317,22 @@ namespace Frontend {
     }
 
     void TableScreen::refreshActionButtons() {
-        const bool myTurn = m_currentSeat.has_value();
+        const bool myTurn = m_currentSeat.has_value() && !m_bettingSeat.has_value();
         m_hitButton.setEnabled(myTurn);
         m_standButton.setEnabled(myTurn);
         // Double se poate cere doar pe primele două cărți. Dacă regula e alta, se schimbă aici.
         m_doubleButton.setEnabled(myTurn &&
                                   m_seats[*m_currentSeat].getHand().getCardCount() == 2);
+    }
+
+    void TableScreen::refreshSeatHighlight() {
+        for (std::size_t seat = 0; seat < m_seats.size(); ++seat) {
+            const bool active = seat == m_currentSeat || seat == m_bettingSeat;
+            // setActive repornește pulsul, așa că îl apelăm doar când se schimbă ceva.
+            if (m_seats[seat].isActive() != active) {
+                m_seats[seat].setActive(active);
+            }
+        }
     }
 
     void TableScreen::requestAction(Action action) {
@@ -309,8 +348,17 @@ namespace Frontend {
         if (m_menuRequested) {
             m_menuRequested = false;
             m_pendingAction.reset();
+            m_pendingBet.reset();
             goToMenu();
             return;
+        }
+
+        if (m_pendingBet) {
+            const int bet = *m_pendingBet;
+            m_pendingBet.reset();
+            if (m_onBet) {
+                m_onBet(bet);
+            }
         }
 
         if (!m_pendingAction) {

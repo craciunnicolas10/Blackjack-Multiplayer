@@ -17,6 +17,7 @@ namespace Frontend {
         m_table.setOnHit([this] { hit(); });
         m_table.setOnStand([this] { stand(); });
         m_table.setOnDoubleDown([this] { doubleDown(); });
+        m_table.setOnBet([this](int amount) { placeBet(amount); });
         for (std::size_t seat = 0; seat < m_players.size(); ++seat) {
             m_table.setPlayerMoney(seat, m_players[seat].money);
         }
@@ -31,15 +32,47 @@ namespace Frontend {
         for (std::size_t seat = 0; seat < m_players.size(); ++seat) {
             Player& player = m_players[seat];
             player.hand.clear();
-            if (player.money < kBet) {
+            if (player.money < kMinBet) {
                 player.money = kStartingMoney;  // e doar demo: cine a rămas fără bani o ia de la capăt
             }
-            player.bet = kBet;
-            player.money -= kBet;
+            player.bet = 0;
             m_table.setPlayerMoney(seat, player.money);
             m_table.setPlayerBet(seat, player.bet);
         }
 
+        askBet(0);
+    }
+
+    void FakeGame::askBet(std::size_t seat) {
+        m_bettingSeat = seat;
+        const Player& player = m_players[seat];
+        m_table.startBetting(seat, player.money, kMinBet, kMaxBet, player.lastBet);
+    }
+
+    void FakeGame::placeBet(int amount) {
+        if (m_bettingSeat >= m_players.size()) {
+            return;
+        }
+        Player& player = m_players[m_bettingSeat];
+        if (amount < kMinBet || amount > kMaxBet || amount > player.money) {
+            return;  // panoul nu lasă asta, dar jocul verifică oricum
+        }
+        player.bet = amount;
+        player.lastBet = amount;
+        player.money -= amount;
+        m_table.setPlayerMoney(m_bettingSeat, player.money);
+        m_table.setPlayerBet(m_bettingSeat, player.bet);
+
+        if (m_bettingSeat + 1 < m_players.size()) {
+            askBet(m_bettingSeat + 1);
+        } else {
+            m_bettingSeat = m_players.size();
+            m_table.endBetting();
+            dealInitialCards();
+        }
+    }
+
+    void FakeGame::dealInitialCards() {
         // Ca la masă: câte o carte fiecăruia, apoi dealerului, de două ori.
         for (std::size_t seat = 0; seat < m_players.size(); ++seat) {
             dealToPlayer(seat);

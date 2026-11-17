@@ -129,7 +129,10 @@ namespace Frontend {
     }
 
     void CardView::draw(sf::RenderTarget& target) const {
-        const bool showFace = m_faceUp && isKnown();
+        // Cât timp așteaptă în pachet să fie împărțită, cartea stă cu spatele în sus, ca să nu
+        // se vadă dinainte ce urmează.
+        const bool waitingInDeck = m_moving && m_moveDelay > 0.f;
+        const bool showFace = m_faceUp && isKnown() && !waitingInDeck;
         const sf::Texture& texture =
             showFace ? m_textures->get(m_rank, m_suit) : m_textures->back();
 

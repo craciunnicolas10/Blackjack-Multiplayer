@@ -10,6 +10,7 @@
 
 #include <app/app_context.h>
 #include <screens/screen.h>
+#include <ui/betting_panel.h>
 #include <ui/button.h>
 #include <ui/hand_view.h>
 #include <ui/seat_view.h>
@@ -55,10 +56,18 @@ namespace Frontend {
         void setCurrentSeat(std::optional<std::size_t> seat);
         std::optional<std::size_t> getCurrentSeat() const;
 
+        // Pariuri: panoul apare pentru un jucător (locul lui e evidențiat), iar pariul ales
+        // ajunge la joc prin setOnBet. Limitele vin din joc; `initialBet` e propus din start
+        // (ex. pariul din runda trecută). Cât timp se pariază, Hit/Stand/Double sunt inactive.
+        void startBetting(std::size_t seat, int money, int minBet, int maxBet, int initialBet);
+        void endBetting();
+        std::optional<std::size_t> getBettingSeat() const;
+
         // Eticheta apare deasupra mâinii după ce s-au terminat animațiile cărților.
         void showResult(std::size_t seat, RoundResult result);
 
-        // Strânge cărțile, scorurile și rezultatele, pentru o rundă nouă. Banii rămân.
+        // Strânge cărțile, scorurile și rezultatele și închide panoul de pariu, pentru o rundă
+        // nouă. Banii și pariurile afișate rămân.
         void clearRound();
 
         // True cât timp mai e vreo carte pe drum sau în curs de întoarcere.
@@ -68,6 +77,7 @@ namespace Frontend {
         void setOnHit(std::function<void()> onHit);
         void setOnStand(std::function<void()> onStand);
         void setOnDoubleDown(std::function<void()> onDoubleDown);
+        void setOnBet(std::function<void(int)> onBet);
 
        private:
         enum class Action { Hit, Stand, DoubleDown };
@@ -76,6 +86,8 @@ namespace Frontend {
         // Cât așteaptă următoarea carte până pleacă din pachet; mută coada mai departe.
         float takeDealDelay();
         void refreshActionButtons();
+        // Evidențiază locul jucătorului la rând sau al celui care pariază.
+        void refreshSeatHighlight();
         void requestAction(Action action);
         void applyPendingActions();
         void goToMenu();
@@ -88,12 +100,14 @@ namespace Frontend {
                         RoundResult result) const;
 
         AppContext m_context;
+        std::vector<sf::String> m_playerNames;
         std::vector<SeatView> m_seats;
         std::vector<std::optional<int>> m_scores;
         std::vector<std::optional<RoundResult>> m_results;
         HandView m_dealerHand;
         std::optional<int> m_dealerScore;
         std::optional<std::size_t> m_currentSeat;
+        std::optional<std::size_t> m_bettingSeat;
 
         float m_dealQueue = 0.f;  // secunde până pleacă următoarea carte din pachet
         // Cartea dealerului care se întoarce după ce se termină coada de împărțit.
@@ -108,14 +122,17 @@ namespace Frontend {
         Button m_standButton;
         Button m_doubleButton;
         Button m_menuButton;
+        BettingPanel m_bettingPanel;
 
         std::function<void()> m_onHit;
         std::function<void()> m_onStand;
         std::function<void()> m_onDoubleDown;
+        std::function<void(int)> m_onBet;
 
         // Ca în lobby: butoanele doar marchează ce s-a cerut, acțiunea rulează după ce s-au
         // terminat de parcurs evenimentele.
         std::optional<Action> m_pendingAction;
+        std::optional<int> m_pendingBet;
         bool m_menuRequested = false;
 
         // Temporar, până vine Backend-ul: o rundă jucată cu cărți aleatoare.

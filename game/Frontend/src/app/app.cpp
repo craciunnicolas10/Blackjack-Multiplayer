@@ -25,8 +25,11 @@ namespace Frontend {
 
     bool Application::initializeSubsystems() {
         initializeWindow();
-        return initializeFonts();
+        return initializeFonts() && initializeCardTextures();
     }
+
+    // Erorile pentru fiecare fișier lipsă sunt scrise deja de CardTextures::load.
+    bool Application::initializeCardTextures() { return m_cardTextures.load(); }
 
     bool Application::initializeFonts() {
         if (!m_font.openFromFile(kFontPath)) {
@@ -47,7 +50,7 @@ namespace Frontend {
     }
 
     void Application::mainLoop() {
-        const AppContext context{*m_window, m_font, m_screens};
+        const AppContext context{*m_window, m_font, m_screens, m_cardTextures};
         m_screens.change(std::make_unique<MenuScreen>(context));
         m_screens.applyPending();
 

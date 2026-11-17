@@ -6,12 +6,15 @@
 #include <app/layout.h>
 #include <screens/menu_screen.h>
 #include <screens/screen_manager.h>
+#include <ui/card_textures.h>
+#include <ui/card_view.h>
+#include <ui/hand_view.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
     namespace {
-        constexpr sf::Vector2f kCardSize{90.f, 126.f};
-        constexpr float kCardOffset = 40.f;  // cât e mutată fiecare carte față de cea dinainte
+        constexpr sf::Vector2f kCardSize = CardView::kSize;
+        constexpr float kCardOffset = HandView::kCardOffset;
 
         constexpr sf::Vector2f kDealerPosition{kLogicalWidth / 2.f, 70.f};
         constexpr float kSeatY = 400.f;
@@ -62,16 +65,18 @@ namespace Frontend {
         drawLabel(target, utf8("Dealer"), {kDealerPosition.x, kDealerPosition.y - 46.f});
         const float dealerHandWidth = kCardSize.x + kCardOffset;
         const float dealerX = kDealerPosition.x - dealerHandWidth / 2.f;
-        drawCardPlaceholder(target, {dealerX, kDealerPosition.y}, false);
-        drawCardPlaceholder(target, {dealerX + kCardOffset, kDealerPosition.y}, true);
+        drawCard(target, {dealerX, kDealerPosition.y}, 14, kSuitSpades, true);
+        drawCard(target, {dealerX + kCardOffset, kDealerPosition.y}, 10, kSuitHearts, false);
 
-        // Câte un loc pentru fiecare jucător, cu numele din lobby.
+        // Câte un loc pentru fiecare jucător, cu numele din lobby. Cărțile sunt de test.
         for (std::size_t seat = 0; seat < m_playerNames.size(); ++seat) {
             const sf::Vector2f center = seatPosition(seat);
             const float handWidth = kCardSize.x + kCardOffset;
             const float handX = center.x - handWidth / 2.f;
-            drawCardPlaceholder(target, {handX, center.y}, false);
-            drawCardPlaceholder(target, {handX + kCardOffset, center.y}, false);
+            const int seatIndex = static_cast<int>(seat);
+            drawCard(target, {handX, center.y}, 13 - seatIndex, seatIndex % kSuitCount, true);
+            drawCard(target, {handX + kCardOffset, center.y}, 2 + 2 * seatIndex,
+                     (seatIndex + 1) % kSuitCount, true);
             drawLabel(target, m_playerNames.at(seat), {center.x, center.y + kCardSize.y + 10.f});
         }
 
@@ -89,16 +94,11 @@ namespace Frontend {
         return {kLogicalWidth * static_cast<float>(seat + 1) / slots, kSeatY};
     }
 
-    // TODO(C): înlocuiește cu CardView când e gata.
-    void TableScreen::drawCardPlaceholder(sf::RenderTarget& target, sf::Vector2f position,
-                                          bool faceDown) const {
-        sf::RectangleShape card(kCardSize);
+    void TableScreen::drawCard(sf::RenderTarget& target, sf::Vector2f position, int rank, int suit,
+                               bool faceUp) const {
+        CardView card(m_context.cards, rank, suit, faceUp);
         card.setPosition(position);
-        // Fața ascunsă e albastră, ca spatele unei cărți; restul sunt gri.
-        card.setFillColor(faceDown ? sf::Color(40, 70, 150) : sf::Color(200, 200, 200));
-        card.setOutlineColor(sf::Color(60, 60, 60));
-        card.setOutlineThickness(2.f);
-        target.draw(card);
+        card.draw(target);
     }
 
     void TableScreen::drawLabel(sf::RenderTarget& target, const sf::String& text,

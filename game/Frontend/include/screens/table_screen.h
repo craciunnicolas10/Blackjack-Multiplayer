@@ -10,7 +10,7 @@
 
 namespace Frontend {
     // Masa de joc. Deocamdată arată doar layout-ul: zona dealerului, câte un loc pentru fiecare
-    // jucător din lobby și butoanele. Cărțile sunt dreptunghiuri până vine CardView (persoana C).
+    // jucător din lobby și butoanele. Cărțile sunt de test până vine jocul real.
     class TableScreen : public Screen {
        public:
         TableScreen(AppContext context, std::vector<sf::String> playerNames);
@@ -20,8 +20,8 @@ namespace Frontend {
 
        private:
         sf::Vector2f seatPosition(std::size_t seat) const;
-        void drawCardPlaceholder(sf::RenderTarget& target, sf::Vector2f position,
-                                 bool faceDown) const;
+        void drawCard(sf::RenderTarget& target, sf::Vector2f position, int rank, int suit,
+                      bool faceUp) const;
         void drawLabel(sf::RenderTarget& target, const sf::String& text,
                        sf::Vector2f centerTop) const;
         void goToMenu();

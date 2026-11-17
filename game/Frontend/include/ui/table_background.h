@@ -11,7 +11,7 @@
 
 namespace Frontend {
     // Fundalul mesei: postavul (FeltBackground), un arc auriu între dealer și jucători și,
-    // de-a lungul arcului, textul „Dealer stands on 17 · Blackjack plătește 3:2”.
+    // de-a lungul arcului, textul „Dealerul se oprește la 17 · Blackjack plătește 3:2”.
     // Se construiește o dată (în constructorul ecranului) și se desenează primul în draw().
     class TableBackground {
        public:

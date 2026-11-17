@@ -64,7 +64,7 @@ namespace Frontend {
     }
 
     void TableBackground::buildArcText(const sf::Font& font) {
-        const sf::String text = utf8("Dealer stands on 17  ·  Blackjack plătește 3:2");
+        const sf::String text = utf8("Dealerul se oprește la 17  ·  Blackjack plătește 3:2");
         const float radius = (kArcOuterRadius + kArcInnerRadius) / 2.f;
 
         // Lățimea fiecărei litere, ca să le așezăm una după alta de-a lungul arcului.

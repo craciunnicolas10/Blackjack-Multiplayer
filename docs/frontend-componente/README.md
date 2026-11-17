@@ -30,7 +30,7 @@ namespace-ul `Frontend`. Se desenează în spațiul logic 1280×720, ca restul e
 | Componentă | Fișier | Ce face |
 |---|---|---|
 | **FeltBackground** | `ui/felt_background.h` | Postavul verde cu gradient și textură fină, pe tot ecranul. Fundal comun pentru meniu, lobby și masă. |
-| **TableBackground** | `ui/table_background.h` | Postavul + arcul auriu + textul „Dealer stands on 17 · Blackjack plătește 3:2” scris de-a lungul arcului. |
+| **TableBackground** | `ui/table_background.h` | Postavul + arcul auriu + textul „Dealerul se oprește la 17 · Blackjack plătește 3:2” scris de-a lungul arcului. |
 | **TitleBanner** | `ui/title_banner.h` | Titlul „Blackjack” din meniu, auriu cu umbră, cu un evantai de cărți (A♠, K♥) care se leagănă și un teanc de jetoane. |
 | **ResultBadge** | `ui/result_badge.h` | Eticheta cu rezultatul („Câștig”, „Pierdere”, „Egal”, „Blackjack!”), care crește și se așază la apariție. La câștig se aude sunetul de victorie. |
 

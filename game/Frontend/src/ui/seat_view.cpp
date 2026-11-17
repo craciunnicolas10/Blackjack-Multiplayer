@@ -1,5 +1,6 @@
 #include <ui/seat_view.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <string>
@@ -12,24 +13,34 @@ namespace Frontend {
         constexpr unsigned kInfoSize = 18;
         constexpr float kPanelPadding = 8.f;
         constexpr float kLineGap = 4.f;
+        constexpr float kChipsGap = 6.f;  // între panou și teancul de jetoane
 
         const sf::Color kGold(240, 210, 120);
+        const sf::Color kInfoColor(220, 220, 220);
+        const sf::Color kMoneyUp(130, 235, 130);
+        const sf::Color kMoneyDown(245, 120, 110);
 
         void centerTextAt(sf::Text& text, sf::Vector2f centerTop) {
             const sf::FloatRect bounds = text.getLocalBounds();
             text.setOrigin({bounds.position.x + bounds.size.x / 2.f, bounds.position.y});
             text.setPosition(centerTop);
         }
+
+        float easeOutCubic(float t) {
+            const float inverse = 1.f - t;
+            return 1.f - inverse * inverse * inverse;
+        }
     }  // namespace
 
     SeatView::SeatView(const sf::Font& font, const CardTextures& textures, const sf::String& name)
         : m_hand(textures),
+          m_chips(font),
           m_panel(kPanelSize),
           m_name(font, name, kNameSize),
           m_money(font, "", kInfoSize),
           m_bet(font, "", kInfoSize) {
         m_panel.setOutlineThickness(2.f);
-        setMoney(0);
+        refreshMoneyText();
         setBet(0);
         updateColors();
     }
@@ -39,6 +50,10 @@ namespace Frontend {
         m_hand.setPosition(centerTop);
         m_panel.setPosition(
             {centerTop.x - kPanelSize.x / 2.f, centerTop.y + CardView::kSize.y + kPanelGap});
+        // Teancul stă în dreapta panoului, cu jetonul de jos la nivelul marginii de jos.
+        const sf::Vector2f panelTop = m_panel.getPosition();
+        m_chips.setPosition({panelTop.x + kPanelSize.x + kChipsGap + ChipStack::kChipRadius,
+                             panelTop.y + kPanelSize.y - ChipStack::kChipRadius - 4.f});
         layoutTexts();
     }
 
@@ -50,13 +65,32 @@ namespace Frontend {
     }
 
     void SeatView::setMoney(int money) {
-        m_money.setString(utf8("Bani: " + std::to_string(money)));
-        layoutTexts();
+        if (!m_moneyKnown) {
+            // Prima sumă (ex. banii de start) apare direct, nu numărată de la 0.
+            m_moneyKnown = true;
+            m_moneyFrom = m_moneyTarget = m_moneyShown = money;
+            m_moneyElapsed = kMoneyAnimationDuration;
+        } else {
+            m_moneyFrom = m_moneyShown;
+            m_moneyTarget = money;
+            m_moneyElapsed = 0.f;
+        }
+        refreshMoneyText();
     }
 
     void SeatView::setBet(int bet) {
         m_bet.setString(utf8("Pariu: " + std::to_string(bet)));
         layoutTexts();
+        if (!(bet == 0 && m_chips.isAnimating())) {
+            m_chips.setAmount(bet);
+        }
+    }
+
+    void SeatView::settleBet(ChipsTo destination, sf::Vector2f dealerPosition) {
+        // Spre jucător = spre suma lui de bani din panou.
+        const sf::Vector2f target =
+            destination == ChipsTo::Player ? m_money.getPosition() : dealerPosition;
+        m_chips.sendTo(target);
     }
 
     void SeatView::setActive(bool active) {
@@ -71,8 +105,24 @@ namespace Frontend {
 
     const HandView& SeatView::getHand() const { return m_hand; }
 
+    bool SeatView::isAnimating() const {
+        return m_hand.isAnimating() || m_chips.isAnimating() ||
+               m_moneyElapsed < kMoneyAnimationDuration;
+    }
+
     void SeatView::update(float dt) {
         m_hand.update(dt);
+        m_chips.update(dt);
+
+        if (m_moneyElapsed < kMoneyAnimationDuration) {
+            m_moneyElapsed = std::min(m_moneyElapsed + dt, kMoneyAnimationDuration);
+            const float t = easeOutCubic(m_moneyElapsed / kMoneyAnimationDuration);
+            m_moneyShown =
+                m_moneyFrom +
+                static_cast<int>(std::lround(static_cast<float>(m_moneyTarget - m_moneyFrom) * t));
+            refreshMoneyText();
+        }
+
         if (m_active) {
             m_pulseTime += dt;
             updateColors();
@@ -84,6 +134,7 @@ namespace Frontend {
         target.draw(m_name);
         target.draw(m_money);
         target.draw(m_bet);
+        m_chips.draw(target);
         m_hand.draw(target);
     }
 
@@ -115,7 +166,17 @@ namespace Frontend {
             m_panel.setOutlineThickness(2.f);
             m_name.setFillColor(sf::Color::White);
         }
-        m_money.setFillColor(sf::Color(220, 220, 220));
-        m_bet.setFillColor(sf::Color(220, 220, 220));
+        m_bet.setFillColor(kInfoColor);
+    }
+
+    void SeatView::refreshMoneyText() {
+        m_money.setString(utf8("Bani: " + std::to_string(m_moneyShown)));
+        // Cât timp suma se schimbă: verde când crește, roșu când scade.
+        if (m_moneyElapsed < kMoneyAnimationDuration && m_moneyTarget != m_moneyFrom) {
+            m_money.setFillColor(m_moneyTarget > m_moneyFrom ? kMoneyUp : kMoneyDown);
+        } else {
+            m_money.setFillColor(kInfoColor);
+        }
+        layoutTexts();
     }
 }  // namespace Frontend

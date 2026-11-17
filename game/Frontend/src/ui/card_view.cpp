@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 
+#include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
 
@@ -92,6 +94,8 @@ namespace Frontend {
 
     bool CardView::isMoving() const { return m_moving; }
 
+    bool CardView::isWaitingInDeck() const { return m_moving && m_moveDelay > 0.f; }
+
     bool CardView::isAnimating() const { return m_moving || m_flipping; }
 
     void CardView::update(float dt) {
@@ -131,7 +135,7 @@ namespace Frontend {
     void CardView::draw(sf::RenderTarget& target) const {
         // Cât timp așteaptă în pachet să fie împărțită, cartea stă cu spatele în sus, ca să nu
         // se vadă dinainte ce urmează.
-        const bool waitingInDeck = m_moving && m_moveDelay > 0.f;
+        const bool waitingInDeck = isWaitingInDeck();
         const bool showFace = m_faceUp && isKnown() && !waitingInDeck;
         const sf::Texture& texture =
             showFace ? m_textures->get(m_rank, m_suit) : m_textures->back();
@@ -147,6 +151,19 @@ namespace Frontend {
             const float t = std::min(m_flipElapsed / m_flipDuration, 1.f);
             widthFactor = std::abs(1.f - 2.f * t);
         }
+
+        // Umbra ușoară de sub carte. Cât timp cartea e în aer (alunecă), umbra e mai departe și
+        // mai slabă, ca și cum ar fi ridicată de pe masă.
+        const bool inAir = m_moving && !waitingInDeck;
+        const sf::Vector2f shadowOffset = inAir ? sf::Vector2f{7.f, 9.f} : sf::Vector2f{3.f, 4.f};
+        const std::uint8_t shadowAlpha = inAir ? 55 : 80;
+        // Puțin mai mică decât cartea, ca să nu iasă pe la colțurile rotunjite.
+        const sf::Vector2f shadowSize{(kSize.x - 4.f) * widthFactor, kSize.y - 4.f};
+        sf::RectangleShape shadow(shadowSize);
+        shadow.setOrigin(shadowSize / 2.f);
+        shadow.setPosition(m_position + kSize / 2.f + shadowOffset);
+        shadow.setFillColor(sf::Color(0, 0, 0, shadowAlpha));
+        target.draw(shadow);
 
         sf::Sprite sprite(texture);
         sprite.setOrigin(textureSize / 2.f);

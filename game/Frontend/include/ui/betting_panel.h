@@ -7,6 +7,7 @@
 #include <SFML/Graphics.hpp>
 
 #include <ui/button.h>
+#include <ui/chip_button.h>
 
 namespace Frontend {
     // Panoul în care un jucător își alege pariul: jetoane care adună la sumă, „Șterge” și
@@ -44,7 +45,7 @@ namespace Frontend {
         sf::Text m_title;
         sf::Text m_amount;
         sf::Text m_info;
-        std::vector<Button> m_chipButtons;
+        std::vector<ChipButton> m_chipButtons;
         Button m_clearButton;
         Button m_confirmButton;
 

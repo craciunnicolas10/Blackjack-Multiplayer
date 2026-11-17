@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <utility>
 
+#include <audio/sound_player.h>
+
 namespace Frontend {
     HandView::HandView(const CardTextures& textures) : m_textures(&textures) {}
 
@@ -64,7 +66,12 @@ namespace Frontend {
 
     void HandView::update(float dt) {
         for (CardView& card : m_cards) {
+            const bool wasWaiting = card.isWaitingInDeck();
             card.update(dt);
+            // Sunetul se aude când cartea pleacă efectiv din pachet, nu când e cerută.
+            if (wasWaiting && !card.isWaitingInDeck()) {
+                playSound(SoundId::Card);
+            }
         }
     }
 
@@ -87,6 +94,9 @@ namespace Frontend {
         m_cards.push_back(std::move(card));
         relayout(true);
         m_cards.back().moveTo(slotPosition(m_cards.size() - 1), CardView::kMoveDuration, delay);
+        if (delay <= 0.f) {
+            playSound(SoundId::Card);  // pleacă imediat; altfel sună în update()
+        }
     }
 
     void HandView::relayout(bool animate) {

@@ -4,15 +4,17 @@
 #include <string>
 #include <utility>
 
+#include <audio/sound_player.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
     namespace {
-        constexpr sf::Vector2f kChipSize{110.f, 50.f};
+        constexpr float kChipRadius = 32.f;
+        constexpr float kChipGap = 24.f;   // între jetoane
+        constexpr float kClearGap = 30.f;  // între ultimul jeton și „Șterge”
         constexpr sf::Vector2f kClearSize{130.f, 50.f};
         constexpr sf::Vector2f kConfirmSize{220.f, 52.f};
-        constexpr float kButtonGap = 16.f;
-        constexpr float kButtonsY = 150.f;  // față de marginea de sus a panoului
+        constexpr float kChipsCenterY = 176.f;  // față de marginea de sus a panoului
         constexpr float kConfirmY = 218.f;
 
         const sf::Color kGold(240, 210, 120);
@@ -26,14 +28,23 @@ namespace Frontend {
         // Rândul cu jetoane + „Șterge”, centrat în panou.
         float buttonsRowLeft(sf::Vector2f panelPosition) {
             const float chipCount = static_cast<float>(BettingPanel::kChipValues.size());
-            const float width = chipCount * kChipSize.x + kClearSize.x + chipCount * kButtonGap;
+            const float width = chipCount * 2.f * kChipRadius + (chipCount - 1.f) * kChipGap +
+                                kClearGap + kClearSize.x;
             return panelPosition.x + (BettingPanel::kSize.x - width) / 2.f;
         }
 
-        sf::Vector2f chipPosition(sf::Vector2f panelPosition, std::size_t index) {
-            return {buttonsRowLeft(panelPosition) +
-                        static_cast<float>(index) * (kChipSize.x + kButtonGap),
-                    panelPosition.y + kButtonsY};
+        // Centrul jetonului `index`.
+        sf::Vector2f chipCenter(sf::Vector2f panelPosition, std::size_t index) {
+            return {buttonsRowLeft(panelPosition) + kChipRadius +
+                        static_cast<float>(index) * (2.f * kChipRadius + kChipGap),
+                    panelPosition.y + kChipsCenterY};
+        }
+
+        sf::Vector2f clearPosition(sf::Vector2f panelPosition) {
+            const float chipCount = static_cast<float>(BettingPanel::kChipValues.size());
+            return {buttonsRowLeft(panelPosition) + chipCount * 2.f * kChipRadius +
+                        (chipCount - 1.f) * kChipGap + kClearGap,
+                    panelPosition.y + kChipsCenterY - kClearSize.y / 2.f};
         }
     }  // namespace
 
@@ -43,8 +54,7 @@ namespace Frontend {
           m_title(font, "", 28),
           m_amount(font, "", 34),
           m_info(font, "", 20),
-          m_clearButton(font, utf8("Șterge"), chipPosition(position, kChipValues.size()),
-                        kClearSize),
+          m_clearButton(font, utf8("Șterge"), clearPosition(position), kClearSize),
           m_confirmButton(font, utf8("Confirmă"),
                           {position.x + (kSize.x - kConfirmSize.x) / 2.f, position.y + kConfirmY},
                           kConfirmSize) {
@@ -59,8 +69,7 @@ namespace Frontend {
 
         for (std::size_t i = 0; i < kChipValues.size(); ++i) {
             const int value = kChipValues[i];
-            Button chip(font, utf8("+" + std::to_string(value)), chipPosition(position, i),
-                        kChipSize);
+            ChipButton chip(font, value, chipCenter(position, i), kChipRadius);
             chip.setOnClick([this, value] { addChip(value); });
             m_chipButtons.push_back(std::move(chip));
         }
@@ -96,7 +105,7 @@ namespace Frontend {
             }
         }
 
-        for (Button& chip : m_chipButtons) {
+        for (ChipButton& chip : m_chipButtons) {
             chip.handleEvent(event, window);
         }
         m_clearButton.handleEvent(event, window);
@@ -108,7 +117,7 @@ namespace Frontend {
         target.draw(m_title);
         target.draw(m_amount);
         target.draw(m_info);
-        for (const Button& chip : m_chipButtons) {
+        for (const ChipButton& chip : m_chipButtons) {
             chip.draw(target);
         }
         m_clearButton.draw(target);
@@ -124,6 +133,7 @@ namespace Frontend {
     void BettingPanel::addChip(int value) {
         if (m_bet + value <= effectiveMax()) {
             m_bet += value;
+            playSound(SoundId::Chip);
             refresh();
         }
     }

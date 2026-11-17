@@ -42,6 +42,8 @@ namespace Frontend {
         // păstrează întârzierea); altfel alunecă acolo.
         void retarget(sf::Vector2f target);
         bool isMoving() const;
+        // True cât timp cartea e împărțită dar n-a plecat încă din pachet (`delay` din moveTo).
+        bool isWaitingInDeck() const;
 
         bool isAnimating() const;
         void update(float dt);

@@ -14,3 +14,8 @@ install(TARGETS sfml-graphics sfml-window sfml-system
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Backend SFML::Graphics)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# Sursele sunt UTF-8 (texte cu diacritice); fără /utf-8, MSVC le citește în codepage-ul local.
+if (MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
+endif()

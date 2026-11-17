@@ -1,54 +1,86 @@
 #include <app/app.h>
 
+#include <iostream>
+#include <memory>
 #include <optional>
-#include <string>
 
-#include <Backend/dummy/dummy.h>
+#include <app/app_context.h>
+#include <app/layout.h>
+#include <screens/menu_screen.h>
 
 namespace Frontend {
+    namespace {
+        constexpr const char* kFontPath = "assets/fonts/NotoSansMono-Regular.ttf";
+    }
+
     int Application::run() {
-        initializeSubsystems();
+        if (!initializeSubsystems()) {
+            return 1;
+        }
 
         mainLoop();
 
         return 0;
     }
 
-    void Application::initializeSubsystems() {
+    bool Application::initializeSubsystems() {
         initializeWindow();
-        initializeFonts();
+        return initializeFonts();
     }
 
-    void Application::initializeFonts() {
-        if (!m_font.openFromFile("assets/fonts/NotoSansMono-Regular.ttf")) {
+    bool Application::initializeFonts() {
+        if (!m_font.openFromFile(kFontPath)) {
+            // Calea e relativă la folderul curent: porniți aplicația din out/install/<preset>/bin.
+            std::cerr << "Nu am putut incarca fontul: " << kFontPath << '\n';
+            return false;
         }
+        return true;
     }
 
     void Application::initializeWindow() {
-        m_window = std::make_unique<sf::RenderWindow>(sf::VideoMode({1280, 720}),
-                                                      "Blackjack | Echipa Dealerii");
+        const sf::Vector2u size{static_cast<unsigned>(kLogicalWidth),
+                                static_cast<unsigned>(kLogicalHeight)};
+        m_window =
+            std::make_unique<sf::RenderWindow>(sf::VideoMode(size), "Blackjack | Echipa Dealerii");
+        m_window->setFramerateLimit(60);
+        m_window->setView(makeLetterboxView(m_window->getSize()));
     }
 
     void Application::mainLoop() {
-        auto text = std::to_string(Backend::dummyReturn42());
-        sf::Text dummyText(m_font, text, 30);
-        dummyText.setFillColor(sf::Color::White);
-        dummyText.setPosition({50, 50});
+        const AppContext context{*m_window, m_font, m_screens};
+        m_screens.change(std::make_unique<MenuScreen>(context));
+        m_screens.applyPending();
 
+        sf::Clock clock;
         while (m_window->isOpen()) {
-            while (const auto event = m_window->pollEvent()) {
+            const float dt = clock.restart().asSeconds();
+
+            while (const std::optional event = m_window->pollEvent()) {
                 if (event->is<sf::Event::Closed>()) {
                     m_window->close();
-                } else if (const auto resizeEvent = event->getIf<sf::Event::Resized>()) {
-                    const auto [width, height] = resizeEvent->size;
-                    sf::View view(sf::FloatRect(
-                        {0.f, 0.f}, {static_cast<float>(width), static_cast<float>(height)}));
-                    m_window->setView(view);
+                } else if (const auto* resized = event->getIf<sf::Event::Resized>()) {
+                    m_window->setView(makeLetterboxView(resized->size));
+                } else if (Screen* screen = m_screens.current()) {
+                    screen->handleEvent(*event);
                 }
             }
 
-            m_window->clear(sf::Color::Blue);
-            m_window->draw(dummyText);
+            if (m_screens.quitRequested()) {
+                m_window->close();
+                break;
+            }
+            m_screens.applyPending();
+
+            Screen* screen = m_screens.current();
+            if (screen) {
+                screen->update(dt);
+            }
+
+            // Negru = benzile din jurul zonei de joc când fereastra are altă proporție.
+            m_window->clear(sf::Color::Black);
+            if (screen) {
+                screen->draw(*m_window);
+            }
             m_window->display();
         }
     }

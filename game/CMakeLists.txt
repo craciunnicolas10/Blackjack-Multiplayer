@@ -32,6 +32,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(Backend)
 add_subdirectory(Frontend)
+add_subdirectory(Tests)
 
 foreach (target Backend Frontend)
     if (MSVC)

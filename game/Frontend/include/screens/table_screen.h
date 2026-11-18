@@ -9,27 +9,29 @@
 #include <SFML/Graphics.hpp>
 
 #include <app/app_context.h>
+#include <game/game_session.h>
 #include <game/round_result.h>
 #include <screens/screen.h>
 #include <ui/betting_panel.h>
 #include <ui/button.h>
 #include <ui/hand_view.h>
+#include <ui/notice_panel.h>
 #include <ui/result_badge.h>
 #include <ui/round_summary_panel.h>
 #include <ui/seat_view.h>
 #include <ui/table_background.h>
 
 namespace Frontend {
-    class GameController;
-
     // Masa de joc. Nu știe regulile: jocul (Backend, prin GameController) îi spune ce să
     // arate prin funcțiile publice de mai jos, iar masa anunță prin
     // setOnHit / setOnStand / setOnDoubleDown ce a ales jucătorul.
+    // De unde vine jocul (local sau din rețea) decide GameSession-ul primit.
     // Cărțile se împart pe rând: dacă mai multe vin una după alta, fiecare pleacă din pachet
     // puțin după cea dinainte, chiar dacă au fost cerute în același frame.
     class TableScreen : public Screen {
        public:
-        TableScreen(AppContext context, std::vector<sf::String> playerNames);
+        TableScreen(AppContext context, std::vector<sf::String> playerNames,
+                    std::unique_ptr<GameSession> session);
         ~TableScreen() override;
 
         void handleEvent(const sf::Event& event) override;
@@ -56,13 +58,17 @@ namespace Frontend {
 
         // Jucătorul la rând: locul lui e evidențiat și butoanele Hit/Stand/Double sunt active.
         // nullopt = nu e rândul nimănui (pariuri, rândul dealerului, sfârșit de rundă).
-        void setCurrentSeat(std::optional<std::size_t> seat);
+        // `canAct` = false când jucătorul e pe alt calculator (rețea): butoanele rămân
+        // inactive și masa scrie al cui e rândul.
+        void setCurrentSeat(std::optional<std::size_t> seat, bool canAct = true);
         std::optional<std::size_t> getCurrentSeat() const;
 
         // Pariuri: panoul apare pentru un jucător (locul lui e evidențiat), iar pariul ales
         // ajunge la joc prin setOnBet. Limitele vin din joc; `initialBet` e propus din start
         // (ex. pariul din runda trecută). Cât timp se pariază, Hit/Stand/Double sunt inactive.
         void startBetting(std::size_t seat, int money, int minBet, int maxBet, int initialBet);
+        // Pariază un jucător de pe alt calculator: locul lui e evidențiat, fără panou.
+        void waitForBet(std::size_t seat);
         void endBetting();
         std::optional<std::size_t> getBettingSeat() const;
 
@@ -78,6 +84,9 @@ namespace Frontend {
         // Nu mai urmează nicio rundă (nimeni nu mai are bani): ecranul de rezultat rămâne,
         // doar cu „Meniu”.
         void showGameOver();
+        // Jocul nu mai poate continua (ex. cineva a ieșit din jocul în rețea): un mesaj peste
+        // masă, doar cu „Meniu”.
+        void showConnectionLost(const sf::String& message);
 
         // Strânge cărțile, scorurile și rezultatele și închide panoul de pariu și ecranul de
         // rezultat, pentru o rundă nouă. Banii și pariurile afișate rămân.
@@ -108,6 +117,8 @@ namespace Frontend {
         void refreshActionButtons();
         // Evidențiază locul jucătorului la rând sau al celui care pariază.
         void refreshSeatHighlight();
+        // Textul de sub masă: pe cine se așteaptă (doar în rețea).
+        void setStatus(const sf::String& text);
         void requestAction(Action action);
         void applyPendingActions();
         void goToMenu();
@@ -129,7 +140,10 @@ namespace Frontend {
         HandView m_dealerHand;
         std::optional<int> m_dealerScore;
         std::optional<std::size_t> m_currentSeat;
+        bool m_canAct = true;
         std::optional<std::size_t> m_bettingSeat;
+        bool m_bettingHere = false;  // panoul de pariu e pe calculatorul ăsta
+        sf::Text m_status;
 
         float m_dealQueue = 0.f;  // secunde până pleacă următoarea carte din pachet
         // Cartea dealerului care se întoarce după ce se termină coada de împărțit.
@@ -146,6 +160,8 @@ namespace Frontend {
         Button m_menuButton;
         BettingPanel m_bettingPanel;
         RoundSummaryPanel m_summaryPanel;
+        NoticePanel m_noticePanel;
+        bool m_noticeVisible = false;
 
         std::function<void()> m_onHit;
         std::function<void()> m_onStand;
@@ -165,8 +181,8 @@ namespace Frontend {
         bool m_summaryVisible = false;
         bool m_menuRequested = false;
 
-        // Legătura cu jocul. Ultimul membru, ca să fie distrus primul: până atunci masa,
+        // De unde vine jocul. Ultimul membru, ca să fie distrus primul: până atunci masa,
         // pe care o folosește, există încă.
-        std::shared_ptr<GameController> m_game;
+        std::unique_ptr<GameSession> m_session;
     };
 }  // namespace Frontend

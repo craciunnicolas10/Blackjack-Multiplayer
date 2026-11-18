@@ -1,6 +1,5 @@
 #include <game/game_controller.h>
 
-#include <string>
 #include <utility>
 
 #include <screens/table_screen.h>
@@ -19,31 +18,38 @@ namespace Frontend {
 
         int rankOf(Backend::Card card) { return static_cast<int>(card.rank); }
         int suitOf(Backend::Card card) { return static_cast<int>(card.suit); }
-
-        // Backend-ul primește numele ca UTF-8 în std::string, ca să rămână diacriticele.
-        std::string toUtf8String(const sf::String& name) {
-            const auto utf8 = name.toUtf8();
-            return {utf8.begin(), utf8.end()};
-        }
     }  // namespace
 
-    std::shared_ptr<GameController> GameController::create(
-        TableScreen& table, const std::vector<sf::String>& playerNames) {
+    std::shared_ptr<GameController> GameController::create(TableScreen& table,
+                                                           std::shared_ptr<Backend::IGame> game,
+                                                           std::vector<bool> localSeats) {
         // Constructorul e privat, deci nu se poate folosi std::make_shared.
         std::shared_ptr<GameController> controller(
-            new GameController(table, Backend::IGame::Produce()));
+            new GameController(table, std::move(game), std::move(localSeats)));
         controller->m_game->AddListener(controller);
         controller->connectTable();
-        controller->addPlayers(playerNames);
-        controller->m_game->StartRound();
         return controller;
     }
 
-    GameController::GameController(TableScreen& table, std::shared_ptr<Backend::IGame> game)
+    GameController::GameController(TableScreen& table, std::shared_ptr<Backend::IGame> game,
+                                   std::vector<bool> localSeats)
         : m_table(table),
           m_game(std::move(game)),
+          m_localSeats(std::move(localSeats)),
           m_lastBets(table.getSeatCount(), kSuggestedFirstBet),
           m_balancesAtRoundStart(table.getSeatCount(), 0) {}
+
+    std::optional<std::size_t> GameController::getBettingSeat() const { return m_bettingSeat; }
+
+    void GameController::setOnGameOver(std::function<void()> onGameOver) {
+        m_onGameOver = std::move(onGameOver);
+    }
+
+    void GameController::showGameOver() { m_table.showGameOver(); }
+
+    bool GameController::isLocal(std::size_t seat) const {
+        return seat < m_localSeats.size() && m_localSeats[seat];
+    }
 
     void GameController::connectTable() {
         // Masa păstrează funcțiile astea, iar masa e cea care ține GameController-ul în viață,
@@ -52,13 +58,7 @@ namespace Frontend {
         m_table.setOnHit([this] { m_game->Hit(); });
         m_table.setOnStand([this] { m_game->Stand(); });
         m_table.setOnDoubleDown([this] { m_game->DoubleDown(); });
-        m_table.setOnNextRound([this] { startNextRound(); });
-    }
-
-    void GameController::addPlayers(const std::vector<sf::String>& playerNames) {
-        for (const sf::String& name : playerNames) {
-            m_game->AddPlayer(toUtf8String(name));
-        }
+        m_table.setOnNextRound([this] { requestNextRound(); });
     }
 
     // --- Ce face jucătorul pe masă → jocul ---
@@ -74,10 +74,13 @@ namespace Frontend {
         }
     }
 
-    void GameController::startNextRound() {
+    void GameController::requestNextRound() {
         // Jocul refuză runda nouă când nimeni nu mai are bani nici de pariul minim.
         if (!m_game->StartRound()) {
             m_table.showGameOver();
+            if (m_onGameOver) {
+                m_onGameOver();
+            }
         }
     }
 
@@ -135,7 +138,8 @@ namespace Frontend {
     }
 
     void GameController::OnTurnChanged(int playerIndex) {
-        m_table.setCurrentSeat(static_cast<std::size_t>(playerIndex));
+        const auto seat = static_cast<std::size_t>(playerIndex);
+        m_table.setCurrentSeat(seat, isLocal(seat));
     }
 
     void GameController::OnRoundEnded(int playerIndex, Backend::ERoundResult result) {
@@ -161,8 +165,12 @@ namespace Frontend {
             // nu îl întreabă.
             if (balance >= Backend::kMinBet) {
                 m_bettingSeat = seat;
-                m_table.startBetting(seat, balance, Backend::kMinBet, Backend::kMaxBet,
-                                     m_lastBets[seat]);
+                if (isLocal(seat)) {
+                    m_table.startBetting(seat, balance, Backend::kMinBet, Backend::kMaxBet,
+                                         m_lastBets[seat]);
+                } else {
+                    m_table.waitForBet(seat);
+                }
                 return;
             }
         }

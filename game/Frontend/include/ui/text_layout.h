@@ -14,4 +14,7 @@ namespace Frontend {
 
     // Centrează textul pe orizontală în jurul lui `centerTop.x`, cu partea de sus la `centerTop.y`.
     void centerTextTopAt(sf::Text& text, sf::Vector2f centerTop);
+
+    // Centrează textul pe orizontală în fereastră (1280 logic), cu partea de sus la `top`.
+    void centerHorizontally(sf::Text& text, float top);
 }  // namespace Frontend

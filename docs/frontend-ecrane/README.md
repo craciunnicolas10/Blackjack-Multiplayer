@@ -10,11 +10,13 @@ Tot codul e în `game/Frontend` (header-ele în `include/`, sursele în `src/`),
 ## Cum se trece de la un ecran la altul
 
 ```
-Meniu ──Joacă──▶ Lobby ──Start──▶ Masă
-  ▲               │                │
-  └────Înapoi─────┘                │
-  ▲                                │
-  └──────────Meniu / Escape────────┘
+Meniu ──Joacă─────────────────▶ Lobby ──────────Start──▶ Masă (LocalSession)
+  │
+  ├──Creează joc în rețea──▶ Lobby gazdă ───────Start──▶ Masă (HostSession)
+  │
+  └──Intră într-un joc─────▶ Lobby jucător ─(gazda dă Start)─▶ Masă (ClientSession)
+
+Din lobby-uri: Înapoi / Escape → Meniu. De la masă: Meniu / Escape → Meniu.
 
 La masă, fiecare rundă:
   pariuri (pe rând) ─▶ împărțire ─▶ rândul jucătorilor ─▶ dealerul ─▶ rezultate
@@ -24,9 +26,10 @@ La masă, fiecare rundă:
 
 | Ecran | Fișier | Ce face |
 |---|---|---|
-| **MenuScreen** | `screens/menu_screen.h` | Titlul animat, „Joacă” (spre lobby) și „Ieșire”. |
+| **MenuScreen** | `screens/menu_screen.h` | Titlul animat, „Joacă” (toți la acest calculator), „Creează joc în rețea”, „Intră într-un joc” și „Ieșire”. |
 | **LobbyScreen** | `screens/lobby_screen.h` | Se adaugă 1–4 jucători, cu nume de maxim 12 caractere (diacriticele merg). Numele gol sau dublat e refuzat cu un mesaj roșu. „X” scoate un jucător. „Start” e activ de la un jucător în sus. |
-| **TableScreen** | `screens/table_screen.h` | Masa: dealerul sus, locurile jucătorilor jos, pachetul în dreapta-sus. Arată ce îi spune jocul (vezi mai jos). |
+| **HostLobbyScreen** / **JoinLobbyScreen** | `screens/host_lobby_screen.h`, `screens/join_lobby_screen.h` | Lobby-urile jocului în rețea; vezi [`joc-in-retea`](../joc-in-retea/README.md). |
+| **TableScreen** | `screens/table_screen.h` | Masa: dealerul sus, locurile jucătorilor jos, pachetul în dreapta-sus. Arată ce îi spune jocul (vezi mai jos). Primește un `GameSession` care decide de unde vine jocul. |
 
 | Meniu | Lobby |
 |---|---|
@@ -138,9 +141,8 @@ Jocul poate apela masa oricând și de câte ori vrea în același frame. Masa s
 
 ## Legătura cu Backend-ul: `GameController`
 
-`game/game_controller.h`. Creat de `TableScreen` în constructor; creează jocul cu
-`IGame::Produce()`, așază jucătorii din lobby și pornește prima rundă. Regulile sunt toate în
-Backend, clasa doar mută informația dintr-o parte în alta, în ambele sensuri:
+`game/game_controller.h`. Primește un `IGame` și masa; regulile sunt toate în Backend, clasa
+doar mută informația dintr-o parte în alta, în ambele sensuri:
 
 - **jocul → masa:** e ascultător al jocului (Observer, `IGameListener`) și traduce fiecare
   anunț într-o funcție a mesei;
@@ -163,6 +165,18 @@ Backend, clasa doar mută informația dintr-o parte în alta, în ambele sensuri
 | `setOnBet(amount)` | `PlaceBet(jucătorul care pariază, amount)` |
 | `setOnHit` / `setOnStand` / `setOnDoubleDown` | `Hit()` / `Stand()` / `DoubleDown()` |
 | `setOnNextRound` | `StartRound()`; dacă jocul o refuză (nimeni nu mai are bani de pariul minim), `showGameOver()` |
+
+De unde vine `IGame`-ul decide **`GameSession`** (`game/game_session.h`), primit de masă în
+constructor:
+
+| Sesiune | Când | Jocul |
+|---|---|---|
+| `LocalSession` | „Joacă”: toți la acest calculator | `IGame::Produce()`, aici; toate locurile sunt jucate de aici |
+| `Net::HostSession` | gazda unui joc în rețea | `IGame::Produce()`, aici; doar locul 0 e jucat de aici, restul vin prin rețea |
+| `Net::ClientSession` | un jucător conectat la gazdă | `Net::RemoteGame`, care ține locul jocului gazdei; doar locul lui e jucat de aici |
+
+La locurile jucate de pe alt calculator, masa nu deschide panoul de pariu și nu activează
+butoanele; scrie în mijloc pe cine așteaptă („Ana își pune pariul...”, „E rândul lui Ana”).
 
 Numele jucătorilor ajung la joc ca UTF-8 (`sf::String::toUtf8`), ca să rămână diacriticele.
 Limitele de pariu sunt `Backend::kMinBet` / `kMaxBet`. Fiecărui jucător i se propune pariul din

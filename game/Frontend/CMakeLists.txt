@@ -8,11 +8,11 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/assets DESTINATION bin)
 
-install(TARGETS sfml-graphics sfml-window sfml-system sfml-audio
+install(TARGETS sfml-graphics sfml-window sfml-system sfml-audio sfml-network
     LIBRARY DESTINATION bin
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Backend SFML::Graphics SFML::Audio)
+target_link_libraries(${PROJECT_NAME} PRIVATE Backend SFML::Graphics SFML::Audio SFML::Network)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Copiaza DLL-urile (Backend, SFML) si assets langa Frontend.exe si in build dir,

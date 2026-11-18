@@ -5,7 +5,6 @@
 #include <utility>
 
 #include <app/layout.h>
-#include <game/game_controller.h>
 #include <screens/menu_screen.h>
 #include <screens/screen_manager.h>
 #include <ui/card_textures.h>
@@ -31,6 +30,7 @@ namespace Frontend {
         constexpr float kActionsLeft = (kLogicalWidth - 3 * kActionSize.x - 2 * kActionGap) / 2.f;
 
         constexpr float kScoreRadius = 17.f;
+        constexpr float kStatusY = kDealerPosition.y + CardView::kSize.y + 22.f;
         constexpr float kResultGap = 16.f;  // între eticheta cu rezultatul și cărți
         // Cât stă masa cu rezultatele la vedere înainte să apară ecranul de rezultat.
         constexpr float kSummaryDelay = 1.f;
@@ -41,7 +41,8 @@ namespace Frontend {
         }
     }  // namespace
 
-    TableScreen::TableScreen(AppContext context, std::vector<sf::String> playerNames)
+    TableScreen::TableScreen(AppContext context, std::vector<sf::String> playerNames,
+                             std::unique_ptr<GameSession> session)
         : m_context(context),
           m_background(context.font),
           m_playerNames(std::move(playerNames)),
@@ -50,12 +51,15 @@ namespace Frontend {
           m_pendingMoney(m_playerNames.size()),
           m_money(m_playerNames.size(), 0),
           m_dealerHand(context.cards),
+          m_status(context.font, "", Theme::kTextHeading),
           m_hitButton(context.font, utf8("Hit"), actionPosition(0), kActionSize),
           m_standButton(context.font, utf8("Stand"), actionPosition(1), kActionSize),
           m_doubleButton(context.font, utf8("Double"), actionPosition(2), kActionSize),
           m_menuButton(context.font, utf8("Meniu"), {24.f, 24.f}, {140.f, 48.f}),
           m_bettingPanel(context.font, {(kLogicalWidth - BettingPanel::kSize.x) / 2.f, 80.f}),
-          m_summaryPanel(context.font, m_playerNames.size()) {
+          m_summaryPanel(context.font, m_playerNames.size()),
+          m_noticePanel(context.font),
+          m_session(std::move(session)) {
         m_seats.reserve(m_playerNames.size());
         for (const sf::String& name : m_playerNames) {
             m_seats.emplace_back(context.font, context.cards, name);
@@ -75,12 +79,13 @@ namespace Frontend {
         m_bettingPanel.setOnConfirm([this](int bet) { m_pendingBet = bet; });
         m_summaryPanel.setOnNextRound([this] { m_nextRoundRequested = true; });
         m_summaryPanel.setOnMenu([this] { m_menuRequested = true; });
+        m_noticePanel.setOnMenu([this] { m_menuRequested = true; });
+        m_status.setFillColor(Theme::kTextPrimary);
         refreshActionButtons();
 
-        m_game = GameController::create(*this, m_playerNames);
+        m_session->start(*this);
     }
 
-    // Aici, nu în header, pentru că acolo GameController e doar declarat.
     TableScreen::~TableScreen() = default;
 
     void TableScreen::handleEvent(const sf::Event& event) {
@@ -107,17 +112,25 @@ namespace Frontend {
         m_standButton.handleEvent(event, m_context.window);
         m_doubleButton.handleEvent(event, m_context.window);
         m_menuButton.handleEvent(event, m_context.window);
-        if (m_bettingSeat) {
-            m_bettingPanel.handleEvent(event, m_context.window);
-        }
-        if (m_summaryVisible) {
-            m_summaryPanel.handleEvent(event, m_context.window);
+        if (m_noticeVisible) {
+            // Peste tot restul: doar „Meniu” mai merge.
+            m_noticePanel.handleEvent(event, m_context.window);
+        } else {
+            if (m_bettingSeat && m_bettingHere) {
+                m_bettingPanel.handleEvent(event, m_context.window);
+            }
+            if (m_summaryVisible) {
+                m_summaryPanel.handleEvent(event, m_context.window);
+            }
         }
 
         applyPendingActions();
     }
 
     void TableScreen::update(float dt) {
+        if (!m_noticeVisible) {
+            m_session->update();
+        }
         m_dealQueue = std::max(m_dealQueue - dt, 0.f);
 
         if (m_pendingReveal) {
@@ -187,12 +200,16 @@ namespace Frontend {
         m_standButton.draw(target);
         m_doubleButton.draw(target);
         m_menuButton.draw(target);
+        drawText(target, m_status);
 
-        if (m_bettingSeat) {
+        if (m_bettingSeat && m_bettingHere) {
             m_bettingPanel.draw(target);
         }
         if (m_summaryVisible) {
             m_summaryPanel.draw(target);
+        }
+        if (m_noticeVisible) {
+            m_noticePanel.draw(target);
         }
     }
 
@@ -243,11 +260,13 @@ namespace Frontend {
         m_dealQueue += CardView::kFlipDuration + kDealInterval;
     }
 
-    void TableScreen::setCurrentSeat(std::optional<std::size_t> seat) {
+    void TableScreen::setCurrentSeat(std::optional<std::size_t> seat, bool canAct) {
         if (seat && *seat >= m_seats.size()) {
             seat.reset();
         }
         m_currentSeat = seat;
+        m_canAct = canAct;
+        setStatus(seat && !canAct ? utf8("E rândul lui ") + m_playerNames[*seat] : "");
         refreshSeatHighlight();
         refreshActionButtons();
     }
@@ -260,16 +279,38 @@ namespace Frontend {
             return;
         }
         m_bettingSeat = seat;
+        m_bettingHere = true;
         m_bettingPanel.open(m_playerNames[seat], money, minBet, maxBet, initialBet);
+        setStatus("");
+        refreshSeatHighlight();
+        refreshActionButtons();
+    }
+
+    void TableScreen::waitForBet(std::size_t seat) {
+        if (seat >= m_seats.size()) {
+            return;
+        }
+        m_bettingSeat = seat;
+        m_bettingHere = false;
+        m_pendingBet.reset();
+        setStatus(m_playerNames[seat] + utf8(" își pune pariul..."));
         refreshSeatHighlight();
         refreshActionButtons();
     }
 
     void TableScreen::endBetting() {
         m_bettingSeat.reset();
+        m_bettingHere = false;
         m_pendingBet.reset();
+        setStatus("");
         refreshSeatHighlight();
         refreshActionButtons();
+    }
+
+    void TableScreen::setStatus(const sf::String& text) {
+        m_status.setString(text);
+        // În mijlocul mesei, sub cărțile dealerului: acolo nu acoperă nimic.
+        centerTextTopAt(m_status, {kLogicalWidth / 2.f, kStatusY});
     }
 
     std::optional<std::size_t> TableScreen::getBettingSeat() const { return m_bettingSeat; }
@@ -379,6 +420,13 @@ namespace Frontend {
 
     void TableScreen::showGameOver() { m_summaryPanel.showGameOver(); }
 
+    void TableScreen::showConnectionLost(const sf::String& message) {
+        m_noticePanel.open(utf8("Jocul s-a oprit"), message);
+        m_noticeVisible = true;
+        endBetting();
+        setCurrentSeat(std::nullopt);
+    }
+
     void TableScreen::openRoundSummary() {
         std::vector<RoundSummaryRow> rows;
         for (std::size_t seat = 0; seat < m_seats.size(); ++seat) {
@@ -404,7 +452,7 @@ namespace Frontend {
     }
 
     void TableScreen::refreshActionButtons() {
-        const bool myTurn = m_currentSeat.has_value() && !m_bettingSeat.has_value();
+        const bool myTurn = m_currentSeat.has_value() && m_canAct && !m_bettingSeat.has_value();
         m_hitButton.setEnabled(myTurn);
         m_standButton.setEnabled(myTurn);
         // Double se poate cere doar pe primele două cărți. Dacă regula e alta, se schimbă aici.

@@ -6,11 +6,14 @@
 #include <utility>
 
 #include <app/layout.h>
+#include <game/local_session.h>
 #include <screens/menu_screen.h>
 #include <screens/screen_manager.h>
 #include <screens/table_screen.h>
 #include <ui/crisp_text.h>
+#include <ui/player_rows.h>
 #include <ui/text_layout.h>
+#include <ui/text_utils.h>
 #include <ui/theme.h>
 #include <ui/utf8.h>
 
@@ -27,28 +30,11 @@ namespace Frontend {
         constexpr float kListX = kInputX;
         constexpr float kListWidth = kInputSize.x + kRowGap + kAddSize.x;
         constexpr float kListY = 290.f;
-        constexpr float kListRowHeight = 64.f;
+        constexpr float kListRowHeight = kPlayerRowHeight;
         constexpr sf::Vector2f kRemoveSize{48.f, 48.f};
 
         constexpr sf::Vector2f kBottomButtonSize{200.f, 64.f};
         constexpr float kBottomY = kLogicalHeight - kBottomButtonSize.y - 40.f;
-
-        // Centrat pe orizontală în fereastră, cu partea de sus la `y`.
-        void centerHorizontally(sf::Text& text, float y) {
-            centerTextTopAt(text, {kLogicalWidth / 2.f, y});
-        }
-
-        sf::String trimmed(const sf::String& text) {
-            std::size_t first = 0;
-            std::size_t last = text.getSize();
-            while (first < last && text[first] == U' ') {
-                ++first;
-            }
-            while (last > first && text[last - 1] == U' ') {
-                --last;
-            }
-            return text.substring(first, last - first);
-        }
     }  // namespace
 
     LobbyScreen::LobbyScreen(AppContext context)
@@ -114,20 +100,7 @@ namespace Frontend {
         m_addButton.draw(target);
         drawText(target, m_error);
 
-        for (std::size_t i = 0; i < m_players.size(); ++i) {
-            const float rowY = kListY + static_cast<float>(i) * kListRowHeight;
-
-            sf::RectangleShape row({kListWidth, kListRowHeight - 8.f});
-            row.setPosition({kListX, rowY});
-            row.setFillColor(Theme::kPanelFill);
-            target.draw(row);
-
-            sf::Text name(m_context.font, utf8(std::to_string(i + 1) + ". "), Theme::kTextHeading);
-            name.setString(name.getString() + m_players.at(i));
-            name.setPosition({kListX + 16.f, rowY + 10.f});
-            name.setFillColor(Theme::kTextPrimary);
-            drawText(target, name);
-        }
+        drawPlayerRows(target, m_context.font, m_players, {kListX, kListY}, kListWidth);
         for (const Button& button : m_removeButtons) {
             button.draw(target);
         }
@@ -154,7 +127,8 @@ namespace Frontend {
         } else if (m_startRequested) {
             m_startRequested = false;
             if (!m_players.empty()) {
-                m_context.screens.change(std::make_unique<TableScreen>(m_context, m_players));
+                m_context.screens.change(std::make_unique<TableScreen>(
+                    m_context, m_players, std::make_unique<LocalSession>(m_players)));
             }
         }
     }

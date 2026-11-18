@@ -2,6 +2,8 @@
 
 #include <SFML/Graphics/Rect.hpp>
 
+#include <app/layout.h>
+
 namespace Frontend {
     void centerOrigin(sf::Text& text) {
         const sf::FloatRect bounds = text.getLocalBounds();
@@ -17,5 +19,9 @@ namespace Frontend {
         const sf::FloatRect bounds = text.getLocalBounds();
         text.setOrigin({bounds.position.x + bounds.size.x / 2.f, bounds.position.y});
         text.setPosition(centerTop);
+    }
+
+    void centerHorizontally(sf::Text& text, float top) {
+        centerTextTopAt(text, {kLogicalWidth / 2.f, top});
     }
 }  // namespace Frontend

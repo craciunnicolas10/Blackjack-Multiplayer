@@ -10,6 +10,7 @@
 #include <ui/card_view.h>
 #include <ui/chip_view.h>
 #include <ui/crisp_text.h>
+#include <ui/text_layout.h>
 #include <ui/theme.h>
 
 namespace Frontend {
@@ -31,8 +32,7 @@ namespace Frontend {
         m_title.setFillColor(Theme::kGold);
         m_title.setOutlineColor(kTitleOutline);
         m_title.setOutlineThickness(3.f);
-        const sf::FloatRect bounds = m_title.getLocalBounds();
-        m_title.setOrigin(bounds.position + bounds.size / 2.f);
+        centerOrigin(m_title);
     }
 
     void TitleBanner::setPosition(sf::Vector2f center) { m_position = center; }

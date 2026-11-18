@@ -7,6 +7,7 @@
 
 #include <app/layout.h>
 #include <ui/crisp_text.h>
+#include <ui/text_layout.h>
 #include <ui/theme.h>
 #include <ui/utf8.h>
 
@@ -52,11 +53,6 @@ namespace Frontend {
             return {mix(color.r), mix(color.g), mix(color.b)};
         }
 
-        void centerTextAt(sf::Text& text, sf::Vector2f center) {
-            const sf::FloatRect bounds = text.getLocalBounds();
-            text.setOrigin(bounds.position + bounds.size / 2.f);
-            text.setPosition(center);
-        }
     }  // namespace
 
     RoundSummaryPanel::RoundSummaryPanel(const sf::Font& font, std::size_t rowCount)

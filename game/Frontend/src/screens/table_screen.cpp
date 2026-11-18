@@ -11,6 +11,7 @@
 #include <ui/card_textures.h>
 #include <ui/card_view.h>
 #include <ui/crisp_text.h>
+#include <ui/text_layout.h>
 #include <ui/theme.h>
 #include <ui/utf8.h>
 
@@ -485,9 +486,7 @@ namespace Frontend {
     void TableScreen::drawLabel(sf::RenderTarget& target, const sf::String& text,
                                 sf::Vector2f centerTop) const {
         sf::Text label(m_context.font, text, Theme::kTextBody);
-        const sf::FloatRect bounds = label.getLocalBounds();
-        label.setOrigin({bounds.position.x + bounds.size.x / 2.f, bounds.position.y});
-        label.setPosition(centerTop);
+        centerTextTopAt(label, centerTop);
         label.setFillColor(Theme::kTextPrimary);
         drawText(target, label);
     }
@@ -506,9 +505,7 @@ namespace Frontend {
         target.draw(bubble);
 
         sf::Text text(m_context.font, std::to_string(score), Theme::kTextSmall);
-        const sf::FloatRect textBounds = text.getLocalBounds();
-        text.setOrigin(textBounds.position + textBounds.size / 2.f);
-        text.setPosition(center);
+        centerTextAt(text, center);
         text.setFillColor(Theme::kTextPrimary);
         drawText(target, text);
     }

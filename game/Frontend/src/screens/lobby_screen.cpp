@@ -10,6 +10,7 @@
 #include <screens/screen_manager.h>
 #include <screens/table_screen.h>
 #include <ui/crisp_text.h>
+#include <ui/text_layout.h>
 #include <ui/theme.h>
 #include <ui/utf8.h>
 
@@ -32,10 +33,9 @@ namespace Frontend {
         constexpr sf::Vector2f kBottomButtonSize{200.f, 64.f};
         constexpr float kBottomY = kLogicalHeight - kBottomButtonSize.y - 40.f;
 
+        // Centrat pe orizontală în fereastră, cu partea de sus la `y`.
         void centerHorizontally(sf::Text& text, float y) {
-            const sf::FloatRect bounds = text.getLocalBounds();
-            text.setOrigin({bounds.position.x + bounds.size.x / 2.f, bounds.position.y});
-            text.setPosition({kLogicalWidth / 2.f, y});
+            centerTextTopAt(text, {kLogicalWidth / 2.f, y});
         }
 
         sf::String trimmed(const sf::String& text) {

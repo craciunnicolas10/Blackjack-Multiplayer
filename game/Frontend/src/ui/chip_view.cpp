@@ -10,6 +10,7 @@
 #include <SFML/Graphics/Text.hpp>
 
 #include <ui/crisp_text.h>
+#include <ui/text_layout.h>
 #include <ui/theme.h>
 
 namespace Frontend {
@@ -107,9 +108,7 @@ namespace Frontend {
         const auto characterSize = static_cast<unsigned>(std::lround(radius * sizeFactor * 1.4f));
         sf::Text text(*m_font, label, characterSize);
         text.setStyle(sf::Text::Bold);
-        const sf::FloatRect bounds = text.getLocalBounds();
-        text.setOrigin(bounds.position + bounds.size / 2.f);
-        text.setPosition(m_position);
+        centerTextAt(text, m_position);
         text.setFillColor(adjust(Theme::kTextPrimary));
         drawText(target, text);
     }

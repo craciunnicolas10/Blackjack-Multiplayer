@@ -5,18 +5,11 @@
 #include <cstdint>
 
 #include <audio/sound_player.h>
+#include <ui/easing.h>
 
 namespace Frontend {
     namespace {
         constexpr std::array<int, 3> kDenominations{100, 50, 10};
-
-        float easeInOutCubic(float t) {
-            if (t < 0.5f) {
-                return 4.f * t * t * t;
-            }
-            const float inverse = -2.f * t + 2.f;
-            return 1.f - inverse * inverse * inverse / 2.f;
-        }
     }  // namespace
 
     ChipStack::ChipStack(const sf::Font& font) : m_font(&font) {}

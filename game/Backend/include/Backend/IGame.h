@@ -5,19 +5,39 @@
 #include <string>
 
 #include <Backend/GameEnums.h>
+#include <Backend/IDeck.h>
 #include <Backend/IGameListener.h>
 #include <Backend/IPlayer.h>
 
 namespace Backend {
-    // Punctul de intrare în logica jocului. Se creează cu IGame::Produce().
-    // Funcțiile care întorc bool întorc false (și nu schimbă nimic) dacă acțiunea nu e permisă
-    // în starea curentă.
-    // BLACKJACK_API pe clasă, ca Produce() să poată fi apelată din Frontend.
+    inline constexpr int kMaxPlayers = 4;
+    inline constexpr int kStartingBalance = 1000;
+    inline constexpr int kMinBet = 10;
+    inline constexpr int kMaxBet = 500;
+
+    // Punctul de intrare in logica jocului. Se creeaza cu IGame::Produce().
+    //
+    // Desfasurarea unei runde:
+    //   AddPlayer (1-4 jucatori, doar in WaitingForPlayers)
+    //   StartRound          -> Betting (din WaitingForPlayers sau RoundOver; strange runda veche)
+    //   PlaceBet pentru fiecare jucator care are cel putin kMinBet; dupa ultimul pariu cartile
+    //   se impart singure -> PlayersTurn
+    //   Hit / Stand / DoubleDown pentru GetCurrentPlayerIndex(), pe rand
+    //   dealerul joaca      -> DealerTurn, apoi plata -> RoundOver
+    //
+    // Functiile care intorc bool intorc false (si nu schimba nimic) daca actiunea nu e permisa
+    // in starea curenta. Cat timp dealerul are o carte cu fata in jos, GetDealer() nu o arata
+    // nici in GetHand(), nici in GetScore().
+    //
+    // BLACKJACK_API pe clasa, ca Produce() sa poata fi apelata din Frontend.
     class BLACKJACK_API IGame {
        public:
         virtual ~IGame() = default;
 
+        // Joc cu un pachet de 52 de carti, amestecat aleator la fiecare runda.
         static std::shared_ptr<IGame> Produce();
+        // Joc cu pachetul dat (pentru teste). Intoarce nullptr daca deck e nullptr.
+        static std::shared_ptr<IGame> Produce(std::shared_ptr<IDeck> deck);
 
         virtual void AddListener(std::weak_ptr<IGameListener> listener) = 0;
         virtual void RemoveListener(IGameListener* listener) = 0;
@@ -32,7 +52,9 @@ namespace Backend {
 
         virtual EGameState GetState() const = 0;
         virtual int GetPlayerCount() const = 0;
+        // -1 cand nu e randul nimanui.
         virtual int GetCurrentPlayerIndex() const = 0;
+        // nullptr pentru un index invalid.
         virtual const IPlayer* GetPlayer(int playerIndex) const = 0;
         virtual const IPlayer* GetDealer() const = 0;
     };

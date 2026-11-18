@@ -4,7 +4,7 @@
 #include <Backend/GameEnums.h>
 
 namespace Backend {
-    // Observer: jocul anunță prin aceste funcții tot ce se schimbă. Se înregistrează cu
+    // Observer: jocul anunta prin aceste functii tot ce se schimba. Se inregistreaza cu
     // IGame::AddListener.
     class IGameListener {
        public:

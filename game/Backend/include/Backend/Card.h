@@ -1,7 +1,7 @@
 #pragma once
 
 namespace Backend {
-    // Ordinea și valorile sunt folosite și de Frontend (static_cast<int>), nu le schimbați.
+    // Ordinea si valorile sunt folosite si de Frontend (static_cast<int>), nu le schimbati.
     enum class ESuit {
         Clubs,
         Diamonds,

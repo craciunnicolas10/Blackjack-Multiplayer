@@ -77,7 +77,7 @@ namespace Frontend {
         m_background.setOutlineThickness(3.f);
 
         m_title.setFillColor(Theme::kGold);
-        centerTextAt(m_title, {m_position.x + m_size.x / 2.f, m_position.y + kPadding + 16.f});
+        setTitle(m_title.getString());
         m_dealerLine.setFillColor(Theme::kTextSecondary);
 
         m_nextButton.setOnClick([this] {
@@ -94,6 +94,10 @@ namespace Frontend {
 
     void RoundSummaryPanel::open(const std::vector<RoundSummaryRow>& rows,
                                  std::optional<int> dealerScore) {
+        m_gameOver = false;
+        m_nextButton.setEnabled(true);
+        setTitle(utf8("Rezultatele rundei"));
+
         if (dealerScore) {
             std::string line = "Dealer: " + std::to_string(*dealerScore);
             if (*dealerScore > 21) {
@@ -134,6 +138,26 @@ namespace Frontend {
         }
     }
 
+    void RoundSummaryPanel::showGameOver() {
+        if (m_gameOver) {
+            return;
+        }
+        m_gameOver = true;
+        m_nextButton.setEnabled(false);
+        setTitle(utf8("Jocul s-a terminat"));
+
+        // Motivul, pe rândul cu scorul dealerului.
+        const sf::String reason = utf8("nimeni nu mai are bani de pariu");
+        const sf::String dealer = m_dealerLine.getString();
+        m_dealerLine.setString(dealer.isEmpty() ? reason : dealer + utf8("  ·  ") + reason);
+        centerTextAt(m_dealerLine, {m_position.x + m_size.x / 2.f, m_position.y + 78.f});
+    }
+
+    void RoundSummaryPanel::setTitle(const sf::String& title) {
+        m_title.setString(title);
+        centerTextAt(m_title, {m_position.x + m_size.x / 2.f, m_position.y + kPadding + 16.f});
+    }
+
     void RoundSummaryPanel::setOnNextRound(std::function<void()> onNextRound) {
         m_onNextRound = std::move(onNextRound);
     }
@@ -144,7 +168,7 @@ namespace Frontend {
 
     void RoundSummaryPanel::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
         if (const auto* key = event.getIf<sf::Event::KeyPressed>()) {
-            if (key->code == sf::Keyboard::Key::Enter && m_onNextRound) {
+            if (key->code == sf::Keyboard::Key::Enter && !m_gameOver && m_onNextRound) {
                 m_onNextRound();
             }
         }

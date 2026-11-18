@@ -5,7 +5,8 @@
 #include <SFML/Graphics/Texture.hpp>
 
 namespace Frontend {
-    // Până se mută Card / ERank / ESuit în Backend, rangul și culoarea sunt simple numere.
+    // Rangul și culoarea sunt simple numere, cu aceeași numerotare ca Backend::ERank și
+    // Backend::ESuit (verificat la compilare în game/game_controller.cpp).
     // Rang: 2–10, 11 = jack, 12 = queen, 13 = king, 14 = ace.
     inline constexpr int kMinRank = 2;
     inline constexpr int kMaxRank = 14;

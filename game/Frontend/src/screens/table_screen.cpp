@@ -5,7 +5,7 @@
 #include <utility>
 
 #include <app/layout.h>
-#include <game/fake_game.h>
+#include <game/game_controller.h>
 #include <screens/menu_screen.h>
 #include <screens/screen_manager.h>
 #include <ui/card_textures.h>
@@ -77,11 +77,10 @@ namespace Frontend {
         m_summaryPanel.setOnMenu([this] { m_menuRequested = true; });
         refreshActionButtons();
 
-        m_game = std::make_unique<FakeGame>(*this);
-        m_game->startRound();
+        m_game = GameController::create(*this, m_playerNames);
     }
 
-    // Aici, nu în header, pentru că acolo FakeGame e doar declarat.
+    // Aici, nu în header, pentru că acolo GameController e doar declarat.
     TableScreen::~TableScreen() = default;
 
     void TableScreen::handleEvent(const sf::Event& event) {
@@ -275,7 +274,7 @@ namespace Frontend {
 
     std::optional<std::size_t> TableScreen::getBettingSeat() const { return m_bettingSeat; }
 
-    void TableScreen::showResult(std::size_t seat, RoundResult result) {
+    void TableScreen::showResult(std::size_t seat, Backend::ERoundResult result) {
         const sf::FloatRect bounds = m_seats.at(seat).getHand().getBounds();
         ResultBadge& badge = m_results[seat].emplace(m_context.font, result);
         badge.setPosition({bounds.position.x + bounds.size.x / 2.f,
@@ -341,7 +340,7 @@ namespace Frontend {
                 if (!m_results[seat]) {
                     continue;
                 }
-                const bool lost = m_results[seat]->getResult() == RoundResult::Lose;
+                const bool lost = m_results[seat]->getResult() == Backend::ERoundResult::Lose;
                 m_seats[seat].settleBet(
                     lost ? SeatView::ChipsTo::Dealer : SeatView::ChipsTo::Player, dealerChips);
             }
@@ -377,6 +376,8 @@ namespace Frontend {
         m_summaryDelay = kSummaryDelay;
         m_summaryVisible = false;
     }
+
+    void TableScreen::showGameOver() { m_summaryPanel.showGameOver(); }
 
     void TableScreen::openRoundSummary() {
         std::vector<RoundSummaryRow> rows;

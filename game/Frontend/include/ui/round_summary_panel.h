@@ -14,7 +14,7 @@ namespace Frontend {
     // Un rând din rezumatul rundei: cum a ieșit jucătorul și cu câți bani a rămas.
     struct RoundSummaryRow {
         sf::String name;
-        RoundResult result;
+        Backend::ERoundResult result;
         int net;    // cât a câștigat (+) sau a pierdut (-) în runda asta
         int money;  // banii după rundă
     };
@@ -32,6 +32,8 @@ namespace Frontend {
 
         // `dealerScore` = scorul final al dealerului; nullopt = rândul dealerului nu apare.
         void open(const std::vector<RoundSummaryRow>& rows, std::optional<int> dealerScore);
+        // Nu mai urmează nicio rundă: titlul se schimbă și „Runda următoare” se dezactivează.
+        void showGameOver();
 
         void setOnNextRound(std::function<void()> onNextRound);
         void setOnMenu(std::function<void()> onMenu);
@@ -40,6 +42,8 @@ namespace Frontend {
         void draw(sf::RenderTarget& target) const;
 
        private:
+        void setTitle(const sf::String& title);
+
         sf::Vector2f m_position;
         sf::Vector2f m_size;
         std::size_t m_rowCount;
@@ -52,6 +56,7 @@ namespace Frontend {
         std::vector<sf::Text> m_cells;  // câte 4 pe rând: nume, rezultat, câștig, bani
         Button m_nextButton;
         Button m_menuButton;
+        bool m_gameOver = false;
 
         std::function<void()> m_onNextRound;
         std::function<void()> m_onMenu;

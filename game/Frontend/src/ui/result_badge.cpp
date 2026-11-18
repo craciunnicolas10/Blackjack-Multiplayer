@@ -25,7 +25,7 @@ namespace Frontend {
         }
     }  // namespace
 
-    ResultBadge::ResultBadge(const sf::Font& font, RoundResult result)
+    ResultBadge::ResultBadge(const sf::Font& font, Backend::ERoundResult result)
         : m_result(result),
           m_text(font, utf8(roundResultLabel(result)), 20),
           m_color(roundResultColor(result)) {
@@ -33,7 +33,7 @@ namespace Frontend {
         centerOrigin(m_text);
     }
 
-    RoundResult ResultBadge::getResult() const { return m_result; }
+    Backend::ERoundResult ResultBadge::getResult() const { return m_result; }
 
     void ResultBadge::setPosition(sf::Vector2f center) { m_position = center; }
 
@@ -49,7 +49,8 @@ namespace Frontend {
     void ResultBadge::update(float dt) {
         if (!m_started) {
             m_started = true;
-            if (m_result == RoundResult::Win || m_result == RoundResult::Blackjack) {
+            if (m_result == Backend::ERoundResult::Win ||
+                m_result == Backend::ERoundResult::Blackjack) {
                 playSound(SoundId::Win);
             }
             return;  // primul frame: eticheta apare de la mărimea 0
@@ -70,8 +71,9 @@ namespace Frontend {
         badge.setScale({scale, scale});
         badge.setFillColor(withAlpha(m_color, alpha));
         // Blackjack primește contur auriu; restul, alb.
-        const sf::Color outline =
-            m_result == RoundResult::Blackjack ? Theme::kGoldBright : Theme::kTextPrimary;
+        const sf::Color outline = m_result == Backend::ERoundResult::Blackjack
+                                      ? Theme::kGoldBright
+                                      : Theme::kTextPrimary;
         badge.setOutlineColor(withAlpha(outline, alpha));
         badge.setOutlineThickness(2.f);
 

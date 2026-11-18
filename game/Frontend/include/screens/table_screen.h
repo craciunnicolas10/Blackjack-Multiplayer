@@ -20,10 +20,10 @@
 #include <ui/table_background.h>
 
 namespace Frontend {
-    class FakeGame;
+    class GameController;
 
-    // Masa de joc. Nu știe regulile: jocul (deocamdată FakeGame, apoi adaptorul IGameListener)
-    // îi spune ce să arate prin funcțiile publice de mai jos, iar masa anunță prin
+    // Masa de joc. Nu știe regulile: jocul (Backend, prin GameController) îi spune ce să
+    // arate prin funcțiile publice de mai jos, iar masa anunță prin
     // setOnHit / setOnStand / setOnDoubleDown ce a ales jucătorul.
     // Cărțile se împart pe rând: dacă mai multe vin una după alta, fiecare pleacă din pachet
     // puțin după cea dinainte, chiar dacă au fost cerute în același frame.
@@ -68,13 +68,16 @@ namespace Frontend {
 
         // Eticheta apare deasupra mâinii după ce s-au terminat animațiile cărților; atunci
         // jetoanele pariului pleacă spre jucător (câștig, egal) sau spre dealer (pierdere).
-        void showResult(std::size_t seat, RoundResult result);
+        void showResult(std::size_t seat, Backend::ERoundResult result);
 
         // Ecranul de rezultat: apare peste masă după ce s-au terminat toate animațiile
         // (cărți, jetoane, etichete), cu „Runda următoare” și „Meniu”. Se apelează după
         // showResult și setPlayerMoney; `netWinnings[seat]` = cât a câștigat (+) sau a pierdut
         // (-) jucătorul în runda asta. Locurile fără rezultat nu apar.
         void showRoundSummary(std::vector<int> netWinnings);
+        // Nu mai urmează nicio rundă (nimeni nu mai are bani): ecranul de rezultat rămâne,
+        // doar cu „Meniu”.
+        void showGameOver();
 
         // Strânge cărțile, scorurile și rezultatele și închide panoul de pariu și ecranul de
         // rezultat, pentru o rundă nouă. Banii și pariurile afișate rămân.
@@ -162,7 +165,8 @@ namespace Frontend {
         bool m_summaryVisible = false;
         bool m_menuRequested = false;
 
-        // Temporar, până vine Backend-ul: o rundă jucată cu cărți aleatoare.
-        std::unique_ptr<FakeGame> m_game;
+        // Legătura cu jocul. Ultimul membru, ca să fie distrus primul: până atunci masa,
+        // pe care o folosește, există încă.
+        std::shared_ptr<GameController> m_game;
     };
 }  // namespace Frontend

@@ -1,7 +1,7 @@
 # Frontend: ecrane, masa și legătura cu jocul
 
-Ecranele aplicației, funcțiile prin care jocul controlează masa și `FakeGame`, jocul de test
-folosit până e gata Backend-ul. Componentele de desen (cărți, mâini, locuri, jetoane, fundal,
+Ecranele aplicației, funcțiile prin care jocul controlează masa și `GameController`, legătura
+dintre masă și jocul din Backend. Componentele de desen (cărți, mâini, locuri, jetoane, fundal,
 sunete) sunt descrise separat, în [`frontend-componente`](../frontend-componente/README.md).
 
 Tot codul e în `game/Frontend` (header-ele în `include/`, sursele în `src/`), în namespace-ul
@@ -98,9 +98,8 @@ Escape) duce la meniu.
 
 ## Cum controlează jocul masa
 
-Masa nu știe regulile. Jocul îi spune ce să arate, iar ea anunță ce a ales jucătorul. Acum
-jocul e `FakeGame`; mai târziu va fi o clasă legată de Backend (vezi mai jos). Masa nu se
-schimbă între cele două.
+Masa nu știe regulile. Jocul (prin `GameController`, vezi mai jos) îi spune ce să arate, iar
+ea anunță ce a ales jucătorul.
 
 **Jocul → masa** (`TableScreen`)
 
@@ -116,10 +115,12 @@ schimbă între cele două.
 | `setCurrentSeat(seat)` | Jucătorul la rând (`nullopt` = nimeni). Activează Hit / Stand / Double. |
 | `showResult(seat, result)` | Eticheta cu rezultatul. |
 | `showRoundSummary(netWinnings)` | Ecranul de rezultat, după animații. Se apelează după `showResult` și `setPlayerMoney`. |
+| `showGameOver()` | Nu mai urmează nicio rundă: ecranul de rezultat devine „Jocul s-a terminat”, doar cu „Meniu”. |
 | `clearRound()` | Strânge cărțile, scorurile, etichetele și panourile. Banii rămân. |
 
 Rangul e 2–14 (11 J, 12 Q, 13 K, 14 A), culoarea 0–3 (trefla, caro, cupa, pică), ca în
-`ui/card_textures.h`. `RoundResult` (Win, Lose, Push, Blackjack) e în `game/round_result.h`.
+`ui/card_textures.h`, aceeași numerotare ca `Backend::ERank` / `Backend::ESuit`. Rezultatul e
+`Backend::ERoundResult` direct din API; textul și culoarea lui sunt în `game/round_result.h`.
 
 **Masa → jocul**
 
@@ -135,49 +136,44 @@ Jocul poate apela masa oricând și de câte ori vrea în același frame. Masa s
 - acțiunile jucătorului ajung la joc după ce s-a terminat tratarea evenimentului, deci jocul
   poate apela masa direct din ele.
 
-## FakeGame
+## Legătura cu Backend-ul: `GameController`
 
-`game/fake_game.h`. Un blackjack simplificat, cu cărți aleatoare, ca să se vadă jocul întreg
-fără Backend:
-- 1000 de bani la început; cine rămâne fără bani primește din nou 1000 (e doar test);
-- pariu între 10 și 500, propus 50 în prima rundă;
-- dealerul trage până la 17; blackjack plătește 3:2, câștigul 1:1, egalul își păstrează pariul;
-- Double: pariul se dublează, jucătorul primește o singură carte;
-- fără split și asigurare.
+`game/game_controller.h`. Creat de `TableScreen` în constructor; creează jocul cu
+`IGame::Produce()`, așază jucătorii din lobby și pornește prima rundă. Regulile sunt toate în
+Backend, clasa doar mută informația dintr-o parte în alta, în ambele sensuri:
 
-Constantele (`kStartingMoney`, `kMinBet`, `kMaxBet`, `kDefaultBet`, `kDealerStandsOn`) sunt în
-`fake_game.h`. `TableScreen` creează `FakeGame` în constructor.
+- **jocul → masa:** e ascultător al jocului (Observer, `IGameListener`) și traduce fiecare
+  anunț într-o funcție a mesei;
+- **masa → jocul:** se leagă la `setOnHit`, `setOnBet` etc. și apelează `IGame`.
 
-## Legătura cu Backend-ul (de făcut)
-
-Când e gata Backend-ul, `FakeGame` se înlocuiește cu o clasă care implementează
-`IGameListener` și apelează masa. Interfața convenită la început (commit-ul `7945ec8`) se
-potrivește așa:
-
-| Backend | Masa |
+| Jocul anunță | Masa face |
 |---|---|
-| `IGame::AddPlayer(name)` | Numele vin din lobby ca `sf::String`; se trimit cu `name.toUtf8()`, ca să nu se piardă diacriticele. |
-| starea `Betting` | `startBetting(...)` pe rând pentru fiecare jucător; la `setOnBet` → `IGame::PlaceBet(seat, amount)`; după ultimul → `IGame::StartRound()`. |
-| `OnBetPlaced(i, amount)` | `setPlayerBet(i, amount)`, `setPlayerMoney(i, GetPlayer(i)->GetBalance())` |
-| `OnPlayerCardDealt(i, card)` | `dealPlayerCard(i, rank, suit)`, `setPlayerScore(i, GetPlayer(i)->GetScore())` |
-| `OnDealerCardDealt(card, isFaceDown)` | `dealDealerCard(rank, suit, isFaceDown)` |
-| `OnDealerCardRevealed(card)` | `revealDealerCard(rank, suit)`, `setDealerScore(...)` |
+| starea `Betting` (după `StartRound`) | `clearRound()`, pariurile la 0, apoi panoul de pariu pentru primul jucător |
+| `OnBetPlaced(i, amount)` | `setPlayerBet`, `setPlayerMoney`; în timpul pariurilor, panoul trece la următorul jucător (după ultimul se închide, iar jocul împarte singur cărțile). Vine și după Double, cu pariul dublat. |
+| `OnPlayerCardDealt(i, card)` | `dealPlayerCard`, `setPlayerScore(GetPlayer(i)->GetScore())` |
+| `OnDealerCardDealt(card, isFaceDown)` | `dealDealerCard`, `setDealerScore`. Cât e o carte ascunsă, jocul dă doar scorul celor vizibile. |
+| `OnDealerCardRevealed(card)` | `revealDealerCard`, `setDealerScore` |
 | `OnTurnChanged(i)` | `setCurrentSeat(i)` |
 | starea `DealerTurn` | `setCurrentSeat(nullopt)` |
-| `OnRoundEnded(i, result)` | `showResult(i, result)`, `setPlayerMoney(i, balance)`; după ultimul jucător, `showRoundSummary(...)` |
-| `setOnHit` / `setOnStand` / `setOnDoubleDown` | `IGame::Hit()` / `Stand()` / `DoubleDown()` |
-| `setOnNextRound` | `clearRound()` și pariurile pentru runda nouă |
+| `OnRoundEnded(i, result)` | `showResult`, `setPlayerMoney` |
+| starea `RoundOver` | `showRoundSummary`, cu câștigul = banii de acum − banii de la începutul rundei |
 
-Ce trebuie lămurit cu Backend-ul:
-- `ERank` (Two = 2 … Ace = 14) și `ESuit` (Clubs, Diamonds, Hearts, Spades) au aceeași
-  numerotare ca la masă, deci conversia e un simplu `static_cast<int>`. Dacă ordinea se
-  schimbă în Backend, trebuie schimbată și aici.
-- Scorul dealerului cât timp are o carte ascunsă: dacă `GetDealer()->GetScore()` o include,
-  masa ar arăta-o înainte de vreme. Ori Backend-ul dă doar scorul cărților vizibile, ori îl
-  calculează Frontend-ul.
-- Câștigul net din ecranul de rezultat: Backend-ul nu îl dă direct. Se poate calcula ca
-  diferența dintre banii de la început de rundă (înainte de pariu) și cei de la final.
-- Ce se întâmplă cu un jucător fără bani (iese din joc, nu mai pariază etc.).
+| Masa anunță | Jocul primește |
+|---|---|
+| `setOnBet(amount)` | `PlaceBet(jucătorul care pariază, amount)` |
+| `setOnHit` / `setOnStand` / `setOnDoubleDown` | `Hit()` / `Stand()` / `DoubleDown()` |
+| `setOnNextRound` | `StartRound()`; dacă jocul o refuză (nimeni nu mai are bani de pariul minim), `showGameOver()` |
+
+Numele jucătorilor ajung la joc ca UTF-8 (`sf::String::toUtf8`), ca să rămână diacriticele.
+Limitele de pariu sunt `Backend::kMinBet` / `kMaxBet`. Fiecărui jucător i se propune pariul din
+runda trecută (în prima rundă, 50).
+
+Ce mai decide masa singură, până când Backend-ul oferă informația:
+- **cine pariază:** sare peste cine are mai puțin decât `kMinBet`, ca jocul;
+- **Double activ doar cu 2 cărți** (`TableScreen::refreshActionButtons`);
+- **„Peste 21!”** apare când scorul trece de 21 (`TableScreen::setPlayerScore`).
+
+Când Backend-ul adaugă `CanPlaceBet` / `CanDoubleDown` / `IsBusted`, se înlocuiesc cu ele.
 
 ## Reguli folosite în cod
 

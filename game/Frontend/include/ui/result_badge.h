@@ -17,9 +17,9 @@ namespace Frontend {
         static constexpr sf::Vector2f kSize{150.f, 34.f};
         static constexpr float kAppearDuration = 0.45f;  // secunde
 
-        ResultBadge(const sf::Font& font, RoundResult result);
+        ResultBadge(const sf::Font& font, Backend::ERoundResult result);
 
-        RoundResult getResult() const;
+        Backend::ERoundResult getResult() const;
 
         // `center` = centrul etichetei.
         void setPosition(sf::Vector2f center);
@@ -33,7 +33,7 @@ namespace Frontend {
         void draw(sf::RenderTarget& target) const;
 
        private:
-        RoundResult m_result;
+        Backend::ERoundResult m_result;
         sf::Text m_text;
         sf::Color m_color;
         sf::Vector2f m_position;

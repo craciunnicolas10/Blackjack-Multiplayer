@@ -1,29 +1,29 @@
 #include <game/round_result.h>
 
 namespace Frontend {
-    const char* roundResultLabel(RoundResult result) {
+    const char* roundResultLabel(Backend::ERoundResult result) {
         switch (result) {
-            case RoundResult::Win:
+            case Backend::ERoundResult::Win:
                 return "Câștig";
-            case RoundResult::Lose:
+            case Backend::ERoundResult::Lose:
                 return "Pierdere";
-            case RoundResult::Push:
+            case Backend::ERoundResult::Push:
                 return "Egal";
-            case RoundResult::Blackjack:
+            case Backend::ERoundResult::Blackjack:
                 return "Blackjack!";
         }
         return "";
     }
 
-    sf::Color roundResultColor(RoundResult result) {
+    sf::Color roundResultColor(Backend::ERoundResult result) {
         switch (result) {
-            case RoundResult::Win:
+            case Backend::ERoundResult::Win:
                 return sf::Color(40, 140, 60);
-            case RoundResult::Lose:
+            case Backend::ERoundResult::Lose:
                 return sf::Color(170, 40, 40);
-            case RoundResult::Push:
+            case Backend::ERoundResult::Push:
                 return sf::Color(100, 100, 100);
-            case RoundResult::Blackjack:
+            case Backend::ERoundResult::Blackjack:
                 return sf::Color(190, 140, 20);
         }
         return sf::Color::Black;

@@ -50,12 +50,43 @@ magick -density 144 use_case_diagram.svg use_case_diagram.png
 Notă: «include» înseamnă că se întâmplă de fiecare dată. «extend» înseamnă că se întâmplă doar
 uneori, în condiția din nota de pe diagramă.
 
-## Class Diagram (de făcut)
+## Class Diagram
 
-Se face după ce API-ul din Backend e stabil. Cerința cere ca interfețele, enum-urile și clasele
-din API să fie evidențiate cu altă culoare, de exemplu:
+![Class Diagram](class_diagram.png)
 
-- **interfețe** (`IGame`, `IGameListener`, `IPlayer`): o culoare;
-- **enum-uri** (`ERank`, `ESuit`, `EGameState`, `ERoundResult`): altă culoare;
-- **structuri din API** (`Card`): a treia culoare;
-- clasele interne (implementarea jocului, Frontend-ul): neutru.
+Sursa e `class_diagram.svg`. PNG-ul se regenerează la fel ca la Use Case:
+
+```bash
+magick -density 144 class_diagram.svg class_diagram.png
+```
+
+### Culori
+
+| Culoare | Ce înseamnă | Elemente |
+|---|---|---|
+| Albastru | Interfață din API | `IGame`, `IGameListener`, `IPlayer`, `IDeck` |
+| Verde | Enum din API | `ESuit`, `ERank`, `EGameState`, `ERoundResult` |
+| Portocaliu | Structură din API | `Card` |
+| Gri | Clasă internă din Backend (nu e în API) | `Game`, `Player`, `Dealer`, `Deck`, `hand_score` |
+| Alb | Clasă din Frontend | `GameController`, `TableScreen` |
+
+API-ul e tot ce vede Frontend-ul: fișierele din `game/Backend/include/Backend/` (fără
+subfolderul `game/`). Clasele interne stau în `include/Backend/game/` și `src/game/` și se
+creează doar prin `IGame::Produce()`.
+
+### Relații importante
+
+- **Observer:** `Game` ține o listă de `IGameListener` (`m_listeners`, ca `weak_ptr`) și le anunță
+  fiecare schimbare (`OnPlayerCardDealt`, `OnTurnChanged`, `OnRoundEnded` etc.).
+  `GameController` din Frontend implementează `IGameListener` și traduce anunțurile în
+  funcții ale mesei (`TableScreen`).
+- **Realizări:** `Game` implementează `IGame`, `Player` implementează `IPlayer`, `Deck`
+  implementează `IDeck`. `Dealer` moștenește `Player` și ascunde a doua carte până o întoarce.
+- **Compoziție:** `Game` deține jucătorii (0..4) și dealerul.
+- **`IDeck`:** `Game` primește pachetul din afară (`IGame::Produce(deck)`), deci testele pot
+  folosi un pachet cu cărțile într-o ordine cunoscută sau un mock.
+- **`hand_score`:** funcții libere (nu o clasă) pentru scorul mâinii și blackjack.
+
+Notație: metodele în *italic* sunt abstracte (pur virtuale), cele <u>subliniate</u> sunt
+statice. „metodele din IGame (override)” ține locul metodelor din interfață, ca să nu fie
+scrise de două ori.

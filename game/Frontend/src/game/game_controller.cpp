@@ -39,12 +39,6 @@ namespace Frontend {
           m_lastBets(table.getSeatCount(), kSuggestedFirstBet),
           m_balancesAtRoundStart(table.getSeatCount(), 0) {}
 
-    std::optional<std::size_t> GameController::getBettingSeat() const { return m_bettingSeat; }
-
-    void GameController::setOnGameOver(std::function<void()> onGameOver) {
-        m_onGameOver = std::move(onGameOver);
-    }
-
     void GameController::showGameOver() { m_table.showGameOver(); }
 
     bool GameController::isLocal(std::size_t seat) const {
@@ -78,9 +72,6 @@ namespace Frontend {
         // Jocul refuză runda nouă când nimeni nu mai are bani nici de pariul minim.
         if (!m_game->StartRound()) {
             m_table.showGameOver();
-            if (m_onGameOver) {
-                m_onGameOver();
-            }
         }
     }
 
@@ -116,7 +107,7 @@ namespace Frontend {
         m_table.setPlayerMoney(seat, balanceOf(seat));
         // Tot prin OnBetPlaced vine și pariul dublat (Double); atunci nu se mai pariază.
         if (m_game->GetState() == Backend::EGameState::Betting) {
-            askNextBet(seat + 1);
+            askNextBet();
         }
     }
 
@@ -155,15 +146,16 @@ namespace Frontend {
             m_table.setPlayerBet(seat, 0);
             m_table.setPlayerMoney(seat, balanceOf(seat));
         }
-        askNextBet(0);
+        askNextBet();
     }
 
-    void GameController::askNextBet(std::size_t fromSeat) {
-        for (std::size_t seat = fromSeat; seat < seatCount(); ++seat) {
+    void GameController::askNextBet() {
+        for (std::size_t seat = 0; seat < seatCount(); ++seat) {
             const int balance = balanceOf(seat);
+            const bool alreadyBet = m_game->GetPlayer(static_cast<int>(seat))->GetBet() > 0;
             // Jocul sare peste cine nu are nici pariul minim (vezi IGame.h), deci nici masa
             // nu îl întreabă.
-            if (balance >= Backend::kMinBet) {
+            if (!alreadyBet && balance >= Backend::kMinBet) {
                 m_bettingSeat = seat;
                 if (isLocal(seat)) {
                     m_table.startBetting(seat, balance, Backend::kMinBet, Backend::kMaxBet,

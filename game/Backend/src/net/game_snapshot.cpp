@@ -1,12 +1,12 @@
-#include <net/game_snapshot.h>
+#include <Backend/net/game_snapshot.h>
 
 #include <cstdint>
 
-#include <net/protocol.h>
+#include <Backend/net/protocol.h>
 
-namespace Frontend::Net {
+namespace Backend {
     namespace {
-        PlayerSnapshot snapshotOf(const Backend::IPlayer& player) {
+        PlayerSnapshot SnapshotOf(const IPlayer& player) {
             PlayerSnapshot snapshot;
             snapshot.name = player.GetName();
             snapshot.hand = player.GetHand();
@@ -16,24 +16,24 @@ namespace Frontend::Net {
             return snapshot;
         }
 
-        void writePlayer(sf::Packet& packet, const PlayerSnapshot& player) {
+        void WritePlayer(sf::Packet& packet, const PlayerSnapshot& player) {
             packet << player.name << static_cast<std::uint8_t>(player.hand.size());
-            for (const Backend::Card card : player.hand) {
-                writeCard(packet, card);
+            for (const Card card : player.hand) {
+                WriteCard(packet, card);
             }
             packet << static_cast<std::int32_t>(player.score)
                    << static_cast<std::int32_t>(player.balance)
                    << static_cast<std::int32_t>(player.bet);
         }
 
-        bool readPlayer(sf::Packet& packet, PlayerSnapshot& player) {
+        bool ReadPlayer(sf::Packet& packet, PlayerSnapshot& player) {
             std::uint8_t handSize = 0;
             if (!(packet >> player.name >> handSize) || handSize > kMaxHandSize) {
                 return false;
             }
             player.hand.assign(handSize, {});
-            for (Backend::Card& card : player.hand) {
-                if (!readCard(packet, card)) {
+            for (Card& card : player.hand) {
+                if (!ReadCard(packet, card)) {
                     return false;
                 }
             }
@@ -52,7 +52,7 @@ namespace Frontend::Net {
 
     std::string PlayerSnapshot::GetName() const { return name; }
 
-    std::vector<Backend::Card> PlayerSnapshot::GetHand() const { return hand; }
+    std::vector<Card> PlayerSnapshot::GetHand() const { return hand; }
 
     int PlayerSnapshot::GetScore() const { return score; }
 
@@ -60,45 +60,45 @@ namespace Frontend::Net {
 
     int PlayerSnapshot::GetBet() const { return bet; }
 
-    GameSnapshot takeSnapshot(const Backend::IGame& game) {
+    GameSnapshot TakeSnapshot(const IGame& game) {
         GameSnapshot snapshot;
         snapshot.state = game.GetState();
         snapshot.currentPlayer = game.GetCurrentPlayerIndex();
         for (int i = 0; i < game.GetPlayerCount(); ++i) {
-            if (const Backend::IPlayer* player = game.GetPlayer(i)) {
-                snapshot.players.push_back(snapshotOf(*player));
+            if (const IPlayer* player = game.GetPlayer(i)) {
+                snapshot.players.push_back(SnapshotOf(*player));
             }
         }
-        if (const Backend::IPlayer* dealer = game.GetDealer()) {
-            snapshot.dealer = snapshotOf(*dealer);
+        if (const IPlayer* dealer = game.GetDealer()) {
+            snapshot.dealer = SnapshotOf(*dealer);
         }
         return snapshot;
     }
 
-    void writeSnapshot(sf::Packet& packet, const GameSnapshot& snapshot) {
+    void WriteSnapshot(sf::Packet& packet, const GameSnapshot& snapshot) {
         packet << static_cast<std::uint8_t>(snapshot.state)
                << static_cast<std::int32_t>(snapshot.currentPlayer)
                << static_cast<std::uint8_t>(snapshot.players.size());
         for (const PlayerSnapshot& player : snapshot.players) {
-            writePlayer(packet, player);
+            WritePlayer(packet, player);
         }
-        writePlayer(packet, snapshot.dealer);
+        WritePlayer(packet, snapshot.dealer);
     }
 
-    bool readSnapshot(sf::Packet& packet, GameSnapshot& snapshot) {
+    bool ReadSnapshot(sf::Packet& packet, GameSnapshot& snapshot) {
         std::int32_t currentPlayer = 0;
         std::uint8_t playerCount = 0;
-        if (!readEnum(packet, snapshot.state, kLastGameState) ||
-            !(packet >> currentPlayer >> playerCount) || playerCount > Backend::kMaxPlayers) {
+        if (!ReadEnum(packet, snapshot.state, kLastGameState) ||
+            !(packet >> currentPlayer >> playerCount) || playerCount > kMaxPlayers) {
             return false;
         }
         snapshot.currentPlayer = currentPlayer;
         snapshot.players.assign(playerCount, {});
         for (PlayerSnapshot& player : snapshot.players) {
-            if (!readPlayer(packet, player)) {
+            if (!ReadPlayer(packet, player)) {
                 return false;
             }
         }
-        return readPlayer(packet, snapshot.dealer);
+        return ReadPlayer(packet, snapshot.dealer);
     }
-}  // namespace Frontend::Net
+}  // namespace Backend

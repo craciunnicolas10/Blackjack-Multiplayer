@@ -24,12 +24,13 @@ if(UNIX AND NOT APPLE)
     set(CMAKE_INSTALL_RPATH "$ORIGIN")
 endif()
 
-add_subdirectory(Backend)
-
+# Dependentele (SFML) inaintea proiectelor: Backend-ul foloseste sfml-network pentru jocul
+# in retea, Frontend-ul restul SFML.
 set(CMAKE_EXPORT_COMPILE_COMMANDS OFF)
 include(cmake/Dependencies.cmake)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+add_subdirectory(Backend)
 add_subdirectory(Frontend)
 
 foreach (target Backend Frontend)

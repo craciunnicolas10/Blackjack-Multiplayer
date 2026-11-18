@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -39,14 +38,8 @@ namespace Frontend {
         GameController(const GameController&) = delete;
         GameController& operator=(const GameController&) = delete;
 
-        // Locul căruia i s-a cerut pariul acum (nullopt = nu se pariază).
-        std::optional<std::size_t> getBettingSeat() const;
-        // „Runda următoare”, cerută de pe masă sau, la gazdă, de un jucător din rețea.
-        void requestNextRound();
         // Jocul nu mai pornește nicio rundă (în rețea, aflat de la gazdă).
         void showGameOver();
-        // Apelată când jocul refuză runda nouă (gazda o anunță mai departe în rețea).
-        void setOnGameOver(std::function<void()> onGameOver);
 
         // --- IGameListener ---
         void OnGameStateChanged(Backend::EGameState newState) override;
@@ -65,10 +58,12 @@ namespace Frontend {
         void connectTable();
         bool isLocal(std::size_t seat) const;
 
-        // Deschide panoul de pariu pentru primul jucător de la `fromSeat` încolo care poate
-        // paria; dacă nu mai e niciunul, închide panoul.
-        void askNextBet(std::size_t fromSeat);
+        // Deschide panoul de pariu pentru primul jucător care n-a pariat încă și are bani de
+        // pariu; dacă nu mai e niciunul, închide panoul. Merge după starea jocului, nu după
+        // ordinea anunțurilor, deci e la fel pe toate calculatoarele dintr-un joc în rețea.
+        void askNextBet();
         void placeBet(int amount);
+        void requestNextRound();
 
         void onBettingStarted();
         void onRoundOver();
@@ -79,7 +74,6 @@ namespace Frontend {
         TableScreen& m_table;
         std::shared_ptr<Backend::IGame> m_game;
         std::vector<bool> m_localSeats;
-        std::function<void()> m_onGameOver;
 
         std::optional<std::size_t> m_bettingSeat;
         std::vector<int> m_lastBets;  // propuse din nou în runda următoare

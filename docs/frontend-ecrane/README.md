@@ -12,9 +12,9 @@ Tot codul e în `game/Frontend` (header-ele în `include/`, sursele în `src/`),
 ```
 Meniu ──Joacă─────────────────▶ Lobby ──────────Start──▶ Masă (LocalSession)
   │
-  ├──Creează joc în rețea──▶ Lobby gazdă ───────Start──▶ Masă (HostSession)
+  ├──Creează joc în rețea──▶ Lobby gazdă ───────Start──▶ Masă (NetworkSession, gazdă)
   │
-  └──Intră într-un joc─────▶ Lobby jucător ─(gazda dă Start)─▶ Masă (ClientSession)
+  └──Intră într-un joc─────▶ Lobby jucător ─(gazda dă Start)─▶ Masă (NetworkSession, jucător)
 
 Din lobby-uri: Înapoi / Escape → Meniu. De la masă: Meniu / Escape → Meniu.
 
@@ -172,8 +172,7 @@ constructor:
 | Sesiune | Când | Jocul |
 |---|---|---|
 | `LocalSession` | „Joacă”: toți la acest calculator | `IGame::Produce()`, aici; toate locurile sunt jucate de aici |
-| `Net::HostSession` | gazda unui joc în rețea | `IGame::Produce()`, aici; doar locul 0 e jucat de aici, restul vin prin rețea |
-| `Net::ClientSession` | un jucător conectat la gazdă | `Net::RemoteGame`, care ține locul jocului gazdei; doar locul lui e jucat de aici |
+| `NetworkSession` | jocul în rețea, la gazdă sau la un jucător | `INetworkSession::GetGame()` din Backend: la gazdă jocul real, la jucător o copie ținută la zi din rețea; doar locul de pe calculatorul ăsta e jucat de aici |
 
 La locurile jucate de pe alt calculator, masa nu deschide panoul de pariu și nu activează
 butoanele; scrie în mijloc pe cine așteaptă („Ana își pune pariul...”, „E rândul lui Ana”).

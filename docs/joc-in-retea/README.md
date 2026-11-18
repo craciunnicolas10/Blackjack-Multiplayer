@@ -55,30 +55,53 @@ mai ține câteva zeci de secunde), ia următorul liber și îl afișează lâng
 
 ## Cum funcționează
 
+Toată rețeaua e în **Backend** (`game/Backend`, folderul `net/`), lângă logica jocului, și se
+folosește printr-un API ca al jocului: interfețe, enum-uri și Observer. Frontend-ul nu are cod
+de rețea: ecranele de lobby doar arată ce anunță Backend-ul, iar la masă jocul din rețea are
+aceeași interfață `IGame` ca jocul local.
+
 ```
-GAZDA                                                     JUCĂTOR
-                                       rețea (TCP)
-Game (Backend) ──anunțuri──▶ EventEncoder ═══════▶ ClientSession ──▶ RemoteGame ──anunțuri──▶ GameController ──▶ masa
-     │     └──anunțuri──▶ GameController ──▶ masa                         │
-     ▲                                                                    │
-     └── HostSession ◀═══════ PlaceBet / Hit / Stand / DoubleDown / NextRound ◀── (butoanele mesei)
+GAZDA (Backend)                                               JUCĂTOR (Backend)
+                                          rețea (TCP)
+Game ──anunțuri──▶ EventEncoder ═════════════════════▶ NetworkClient ──▶ RemoteGame ──anunțuri──▶ GameController ──▶ masa
+  │  └──anunțuri──▶ GameController ──▶ masa (Frontend)                         │                     (Frontend)
+  ▲                                                                            │
+  └── NetworkHost ◀══════ PlaceBet / Hit / Stand / DoubleDown / NextRound ◀────┘ (butoanele mesei)
 ```
 
-- **Gazda** rulează jocul real (`IGame::Produce()`). Ascultătorii lui sunt `GameController`
-  (masa gazdei) și `EventEncoder`, care face din fiecare anunț un mesaj pentru rețea, cu starea
-  jocului de după el (banii, pariurile, cărțile vizibile, scorurile).
-- **La jucător**, `RemoteGame` **implementează `IGame`** și ține locul jocului real (patternul
-  **Proxy**): `GameController` și masa lucrează cu el exact ca în jocul local. Acțiunile pleacă
-  la gazdă; anunțurile primite sunt date mai departe ascultătorilor (**Observer**), iar
-  întrebările (`GetPlayer(i)->GetScore()` etc.) primesc răspuns din ultima stare primită.
-- Masa nu știe dacă jocul e local sau în rețea: primește un `GameSession` (`LocalSession`,
-  `Net::HostSession` sau `Net::ClientSession`) și atât.
+### API-ul (`game/Backend/include/Backend/`)
 
-**Ce verifică gazda.** Acțiunile unui jucător trec doar dacă e rândul lui (sau, la pariu, dacă
-lui i se cere pariul); restul (sume, reguli) îl verifică jocul, ca în modul local. Cartea cu
-fața în jos a dealerului **nu pleacă** de pe calculatorul gazdei până nu se întoarce, deci nu
-poate fi aflată din rețea. Mesajele primite sunt verificate (tipuri, valori, lungimi), iar
-unul stricat e ignorat.
+| Fișier | Ce e |
+|---|---|
+| `INetworkHost.h` | Gazda: `Produce(nume)`, `GetAddress()`, `CanStartGame()`, `StartGame()` |
+| `INetworkClient.h` | Jucătorul: `Produce(adresă, nume, rezultat)` |
+| `INetworkSession.h` | Ce au amândouă: `Update()`, `GetPlayerNames()`, `GetLocalSeat()`, `GetGame()`, `AddListener()` |
+| `INetworkListener.h` | Observer: `OnPlayersChanged`, `OnJoinRejected`, `OnGameStarted`, `OnGameOver`, `OnPlayerLeft`, `OnHostLeft` |
+| `NetworkEnums.h` | `EConnectResult` (de ce n-a mers conectarea), `EJoinRejection` (de ce a refuzat gazda) |
+
+Nu folosește fire de execuție: `Update()` citește ce a venit din rețea și anunță ascultătorii,
+deci Frontend-ul o apelează la fiecare frame.
+
+**Pornirea jocului.** Gazda apelează `StartGame()`; toți primesc `OnGameStarted`, după care
+își pun ascultătorii pe `GetGame()` (ca la jocul local), iar gazda pornește prima rundă cu
+`GetGame()->StartRound()`.
+
+### Patternuri
+
+- **Proxy:** `RemoteGame` implementează `IGame` pe calculatorul jucătorului și ține locul
+  jocului gazdei. Acțiunile pleacă la gazdă; anunțurile primite sunt date mai departe
+  ascultătorilor; întrebările (`GetPlayer(i)->GetScore()` etc.) primesc răspuns din ultima
+  stare primită.
+- **Observer:** `EventEncoder` e un `IGameListener` al jocului real și trimite fiecare anunț în
+  rețea; `INetworkListener` anunță Frontend-ul ce se întâmplă în afara mesei.
+- **Decorator:** `HostedGame` e jocul real al gazdei, cu un singur lucru în plus: când
+  `StartRound` e refuzat (nimeni nu mai are bani), anunță și jucătorii din rețea.
+
+**Ce verifică gazda.** Cine intră (versiune, loc la masă, nume valid și nefolosit) și, în
+timpul jocului, că un jucător acționează doar pe locul lui și doar când e rândul lui; restul
+(sume, reguli) îl verifică jocul, ca în modul local. Cartea cu fața în jos a dealerului **nu
+pleacă** de pe calculatorul gazdei până nu se întoarce. Mesajele primite sunt verificate
+(tipuri, valori, lungimi), iar unul stricat e ignorat.
 
 ### Mesajele
 
@@ -89,7 +112,7 @@ Fiecare mesaj e un `sf::Packet` care începe cu tipul lui (`net/protocol.h`).
 | jucător → gazdă | `Join` | versiunea protocolului, numele |
 | | `PlaceBet` | suma |
 | | `Hit`, `Stand`, `DoubleDown`, `NextRound` | – |
-| gazdă → jucător | `Rejected` | motivul (nume luat, masă plină, altă versiune) |
+| gazdă → jucător | `Rejected` | `EJoinRejection` |
 | | `PlayerList` | numele din lobby, în ordinea locurilor |
 | | `GameStarting` | locul jucătorului, numele tuturor |
 | | `GameEvent` | anunțul jocului (`IGameListener`) și starea de după el |
@@ -98,26 +121,32 @@ Fiecare mesaj e un `sf::Packet` care începe cu tipul lui (`net/protocol.h`).
 
 ### Fișierele
 
+**Backend** (`game/Backend`, partea internă în `include/Backend/net/` și `src/net/`):
+
 | Fișier | Ce face |
 |---|---|
-| `net/protocol.h` | Portul, tipurile de mesaje, citirea/scrierea cărților și a enum-urilor, trimiterea sigură |
+| `net/protocol.h` | Porturile, tipurile de mesaje, citirea/scrierea cărților, enum-urilor și adreselor, trimiterea sigură |
 | `net/game_snapshot.h` | Starea jocului care însoțește fiecare anunț; `PlayerSnapshot` implementează `IPlayer` |
-| `net/game_events.h` | `EventEncoder` (anunț → mesaj, la gazdă) și `decodeEvent` (mesaj → anunț, la jucător) |
-| `net/remote_game.h` | `RemoteGame`: `IGame` pentru jucătorul din rețea |
-| `net/host_session.h` | Masa gazdei: jocul real + jucătorii din rețea |
-| `net/client_session.h` | Masa jucătorului: `RemoteGame` + legătura cu gazda |
-| `screens/host_lobby_screen.h` | Lobby-ul gazdei: așteaptă conexiuni, verifică numele, pornește jocul |
-| `screens/join_lobby_screen.h` | Lobby-ul jucătorului: conectarea și așteptarea |
-| `game/game_session.h`, `game/local_session.h` | De unde vine jocul pentru masă |
+| `net/game_events.h` | `EventEncoder` (anunț → mesaj, la gazdă) și `DecodeEvent` (mesaj → anunț, la jucător) |
+| `net/remote_game.h` | `RemoteGame` (Proxy): `IGame` pentru jucătorul din rețea |
+| `net/hosted_game.h` | `HostedGame` (Decorator): jocul real al gazdei |
+| `net/network_host.h` | `NetworkHost`: lobby-ul și jocul la gazdă |
+| `net/network_client.h` | `NetworkClient`: legătura jucătorului cu gazda |
+| `net/listener_list.h` | Lista de ascultători (`weak_ptr`) comună |
 
-Rețeaua folosește modulul `sfml-network` din SFML (pornit în `cmake/Dependencies.cmake`).
+Backend-ul folosește modulul `sfml-network` din SFML (doar el; nimic grafic).
+
+**Frontend** (`game/Frontend`): ecranele `screens/host_lobby_screen.h` și
+`screens/join_lobby_screen.h`, plus `game/network_session.h` (leagă jocul din rețea de masă și
+arată pe masă cine a ieșit) și `game/network_events.h` (ascultătorul `INetworkListener` al
+ecranelor).
 
 ## Limitări
 
 - Fără reconectare: dacă pică cineva, jocul se oprește pentru toți.
 - Câte un jucător pe calculator (gazda inclusiv); maxim 4 calculatoare.
 - Nu se mai poate intra după Start.
-- Testat pe Linux, cu două jocuri deschise pe același calculator (adresa `127.0.0.1`), plus
-  un test automat care trece 1700+ anunțuri prin împachetare/despachetare și compară starea
-  văzută de jucător cu jocul real. **Netestat încă între două calculatoare diferite și pe
-  Windows.**
+- Testat pe Linux: două jocuri deschise pe același calculator (adresa `127.0.0.1`) și un test
+  automat al API-ului din Backend (gazdă + jucător prin rețea, runde jucate până la finalul
+  jocului, compararea stării după fiecare acțiune, refuzuri, ieșirea unui jucător).
+  **Netestat încă între două calculatoare diferite și pe Windows.**

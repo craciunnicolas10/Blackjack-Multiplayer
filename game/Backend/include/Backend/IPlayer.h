@@ -6,7 +6,7 @@
 #include <Backend/Card.h>
 
 namespace Backend {
-    // Vedere doar pentru citire asupra unui jucător (sau a dealerului).
+    // Vedere doar pentru citire asupra unui jucator (sau a dealerului).
     class IPlayer {
        public:
         virtual ~IPlayer() = default;

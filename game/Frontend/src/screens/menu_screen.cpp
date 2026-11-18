@@ -6,15 +6,15 @@
 #include <screens/lobby_screen.h>
 #include <screens/screen_manager.h>
 #include <ui/crisp_text.h>
+#include <ui/text_layout.h>
 #include <ui/theme.h>
 #include <ui/utf8.h>
 
 namespace Frontend {
     namespace {
+        // Centrat pe orizontală în fereastră, cu partea de sus la `y`.
         void centerHorizontally(sf::Text& text, float y) {
-            const sf::FloatRect bounds = text.getLocalBounds();
-            text.setOrigin({bounds.position.x + bounds.size.x / 2.f, bounds.position.y});
-            text.setPosition({kLogicalWidth / 2.f, y});
+            centerTextTopAt(text, {kLogicalWidth / 2.f, y});
         }
     }  // namespace
 

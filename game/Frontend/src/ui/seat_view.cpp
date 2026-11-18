@@ -8,7 +8,9 @@
 #include <SFML/Graphics/ConvexShape.hpp>
 
 #include <ui/crisp_text.h>
+#include <ui/easing.h>
 #include <ui/shapes.h>
+#include <ui/text_layout.h>
 #include <ui/theme.h>
 #include <ui/utf8.h>
 
@@ -26,22 +28,7 @@ namespace Frontend {
         constexpr float kBustAngle = -8.f;      // grade
         constexpr float kBustAppearDuration = 0.3f;
 
-        void centerTextAt(sf::Text& text, sf::Vector2f centerTop) {
-            const sf::FloatRect bounds = text.getLocalBounds();
-            text.setOrigin({bounds.position.x + bounds.size.x / 2.f, bounds.position.y});
-            text.setPosition(centerTop);
-        }
-
-        float easeOutCubic(float t) {
-            const float inverse = 1.f - t;
-            return 1.f - inverse * inverse * inverse;
-        }
-
-        float easeOutBack(float t) {
-            constexpr float kOvershoot = 2.2f;
-            const float u = t - 1.f;
-            return 1.f + (kOvershoot + 1.f) * u * u * u + kOvershoot * u * u;
-        }
+        constexpr float kBustOvershoot = 2.2f;
     }  // namespace
 
     SeatView::SeatView(const sf::Font& font, const CardTextures& textures, const sf::String& name)
@@ -55,8 +42,7 @@ namespace Frontend {
         m_panel.setOutlineThickness(2.f);
         m_bustText.setStyle(sf::Text::Bold);
         m_bustText.setFillColor(Theme::kTextPrimary);
-        const sf::FloatRect bustBounds = m_bustText.getLocalBounds();
-        m_bustText.setOrigin(bustBounds.position + bustBounds.size / 2.f);
+        centerOrigin(m_bustText);
         refreshMoneyText();
         setBet(0);
         updateColors();
@@ -186,7 +172,7 @@ namespace Frontend {
         const sf::Vector2f center{hand.position.x + hand.size.x / 2.f,
                                   hand.position.y + kBustTopOffset};
         const float t = m_bustElapsed / kBustAppearDuration;
-        const float scale = std::max(easeOutBack(t), 0.f);
+        const float scale = std::max(easeOutBack(t, kBustOvershoot), 0.f);
         if (scale <= 0.f) {
             return;
         }
@@ -218,11 +204,11 @@ namespace Frontend {
         const float centerX = panelTop.x + kPanelSize.x / 2.f;
 
         float y = panelTop.y + kPanelPadding;
-        centerTextAt(m_name, {centerX, y});
+        centerTextTopAt(m_name, {centerX, y});
         y += static_cast<float>(kNameSize) + kLineGap + 2.f;
-        centerTextAt(m_money, {centerX, y});
+        centerTextTopAt(m_money, {centerX, y});
         y += static_cast<float>(kInfoSize) + kLineGap;
-        centerTextAt(m_bet, {centerX, y});
+        centerTextTopAt(m_bet, {centerX, y});
     }
 
     void SeatView::updateColors() {

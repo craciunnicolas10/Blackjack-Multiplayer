@@ -9,17 +9,10 @@
 #include <SFML/Graphics/Texture.hpp>
 
 #include <ui/card_textures.h>
+#include <ui/easing.h>
 #include <ui/theme.h>
 
 namespace Frontend {
-    namespace {
-        // Pornește repede și încetinește la final, ca o carte aruncată pe masă.
-        float easeOutCubic(float t) {
-            const float inverse = 1.f - t;
-            return 1.f - inverse * inverse * inverse;
-        }
-    }  // namespace
-
     CardView::CardView(const CardTextures& textures, int rank, int suit, bool faceUp)
         : m_textures(&textures), m_rank(rank), m_suit(suit), m_faceUp(faceUp) {}
 

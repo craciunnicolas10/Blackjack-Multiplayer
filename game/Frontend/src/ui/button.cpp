@@ -3,6 +3,7 @@
 #include <utility>
 
 #include <ui/crisp_text.h>
+#include <ui/text_layout.h>
 #include <ui/theme.h>
 
 namespace Frontend {
@@ -18,9 +19,7 @@ namespace Frontend {
         m_shape.setPosition(position);
         m_shape.setOutlineThickness(2.f);
 
-        const sf::FloatRect bounds = m_text.getLocalBounds();
-        m_text.setOrigin(bounds.position + bounds.size / 2.f);
-        m_text.setPosition(position + size / 2.f);
+        centerTextAt(m_text, position + size / 2.f);
 
         updateColors();
     }

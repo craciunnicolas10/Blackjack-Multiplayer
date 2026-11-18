@@ -7,7 +7,9 @@
 
 #include <audio/sound_player.h>
 #include <ui/crisp_text.h>
+#include <ui/easing.h>
 #include <ui/shapes.h>
+#include <ui/text_layout.h>
 #include <ui/theme.h>
 #include <ui/utf8.h>
 
@@ -15,12 +17,7 @@ namespace Frontend {
     namespace {
         constexpr float kCornerRadius = 10.f;
 
-        // Depășește puțin 1 și revine, ca o etichetă care „sare” la locul ei.
-        float easeOutBack(float t) {
-            constexpr float kOvershoot = 1.9f;
-            const float u = t - 1.f;
-            return 1.f + (kOvershoot + 1.f) * u * u * u + kOvershoot * u * u;
-        }
+        constexpr float kAppearOvershoot = 1.9f;
 
         sf::Color withAlpha(sf::Color color, float alpha) {
             color.a = static_cast<std::uint8_t>(static_cast<float>(color.a) * alpha);
@@ -33,8 +30,7 @@ namespace Frontend {
           m_text(font, utf8(roundResultLabel(result)), 20),
           m_color(roundResultColor(result)) {
         m_text.setStyle(sf::Text::Bold);
-        const sf::FloatRect bounds = m_text.getLocalBounds();
-        m_text.setOrigin(bounds.position + bounds.size / 2.f);
+        centerOrigin(m_text);
     }
 
     RoundResult ResultBadge::getResult() const { return m_result; }
@@ -63,7 +59,7 @@ namespace Frontend {
 
     void ResultBadge::draw(sf::RenderTarget& target) const {
         const float t = std::clamp(m_elapsed / kAppearDuration, 0.f, 1.f);
-        const float scale = std::max(easeOutBack(t), 0.f);
+        const float scale = std::max(easeOutBack(t, kAppearOvershoot), 0.f);
         const float alpha = std::min(t * 3.f, 1.f);
         if (scale <= 0.f) {
             return;

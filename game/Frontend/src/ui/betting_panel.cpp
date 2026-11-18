@@ -6,6 +6,7 @@
 
 #include <audio/sound_player.h>
 #include <ui/crisp_text.h>
+#include <ui/text_layout.h>
 #include <ui/theme.h>
 #include <ui/utf8.h>
 
@@ -19,11 +20,6 @@ namespace Frontend {
         constexpr float kChipsCenterY = 176.f;  // față de marginea de sus a panoului
         constexpr float kConfirmY = 218.f;
 
-        void centerTextAt(sf::Text& text, sf::Vector2f center) {
-            const sf::FloatRect bounds = text.getLocalBounds();
-            text.setOrigin(bounds.position + bounds.size / 2.f);
-            text.setPosition(center);
-        }
 
         // Rândul cu jetoane + „Șterge”, centrat în panou.
         float buttonsRowLeft(sf::Vector2f panelPosition) {

@@ -44,6 +44,8 @@ La masă, fiecare rundă:
 | **Button** | `ui/button.h` | Buton cu hover, apăsare, stare dezactivată și litera tastei în colț (`setHint`). |
 | **TextInput** | `ui/text_input.h` | Câmp de text cu cursor care clipește, text de ajutor când e gol, Backspace și Enter. Acceptă diacritice. |
 | **utf8()** | `ui/utf8.h` | Transformă un text din cod (UTF-8) în `sf::String`, ca diacriticele să apară corect. Orice text cu diacritice trece prin ea. |
+| **Centrarea textelor** | `ui/text_layout.h` | `centerTextAt` (mijlocul textului într-un punct), `centerTextTopAt` (centrat pe orizontală, aliniat sus), `centerOrigin`. |
+| **Curbe de animație** | `ui/easing.h` | `easeOutCubic`, `easeInOutCubic`, `easeOutBack`: fac mișcările cărților, jetoanelor și etichetelor să pară naturale. |
 
 ## La masă
 
@@ -185,5 +187,7 @@ Ce trebuie lămurit cu Backend-ul:
 - **Text:** orice text cu diacritice trece prin `utf8()`, iar orice text se desenează cu
   `drawText` (`ui/crisp_text.h`), ca să fie clar și pe ecran complet.
 - **Culori și mărimi de text:** din `ui/theme.h`, nu scrise de mână.
+- **Fără cod duplicat:** centrarea textelor și curbele de animație sunt în `ui/text_layout.h` și
+  `ui/easing.h`; nu le copiați într-un fișier nou, includeți headerul.
 - **Pornire:** aplicația se pornește din folderul cu executabilul (`out/build/<preset>/Frontend`
   sau `out/install/<preset>/bin`), altfel nu găsește `assets/`.

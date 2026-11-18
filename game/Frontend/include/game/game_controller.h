@@ -58,9 +58,10 @@ namespace Frontend {
         void connectTable();
         bool isLocal(std::size_t seat) const;
 
-        // Deschide panoul de pariu pentru primul jucător care n-a pariat încă și are bani de
-        // pariu; dacă nu mai e niciunul, închide panoul. Merge după starea jocului, nu după
-        // ordinea anunțurilor, deci e la fel pe toate calculatoarele dintr-un joc în rețea.
+        // Deschide panoul de pariu pentru primul jucător care mai are de pariat (îl întreabă
+        // pe joc: IGame::CanPlaceBet); dacă nu mai e niciunul, închide panoul. Merge după
+        // starea jocului, nu după ordinea anunțurilor, deci e la fel pe toate calculatoarele
+        // dintr-un joc în rețea.
         void askNextBet();
         void placeBet(int amount);
         void requestNextRound();
@@ -68,6 +69,7 @@ namespace Frontend {
         void onBettingStarted();
         void onRoundOver();
 
+        void showDealerScore();
         int balanceOf(std::size_t seat) const;
         std::size_t seatCount() const;
 

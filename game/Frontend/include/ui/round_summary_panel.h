@@ -31,7 +31,9 @@ namespace Frontend {
         RoundSummaryPanel(const sf::Font& font, std::size_t rowCount);
 
         // `dealerScore` = scorul final al dealerului; nullopt = rândul dealerului nu apare.
-        void open(const std::vector<RoundSummaryRow>& rows, std::optional<int> dealerScore);
+        // `dealerBusted` (spus de joc) adaugă „peste 21”.
+        void open(const std::vector<RoundSummaryRow>& rows, std::optional<int> dealerScore,
+                  bool dealerBusted);
         // Nu mai urmează nicio rundă: titlul se schimbă și „Runda următoare” se dezactivează.
         void showGameOver();
 

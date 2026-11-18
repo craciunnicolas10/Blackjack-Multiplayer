@@ -19,7 +19,7 @@ namespace Backend {
     // Numarul de porturi incercate de gazda, incepand cu INetworkHost::kDefaultPort.
     inline constexpr unsigned short kPortCount = 10;
     // Se schimba cand se schimba mesajele, ca doua versiuni diferite sa nu joace impreuna.
-    inline constexpr std::uint32_t kProtocolVersion = 2;
+    inline constexpr std::uint32_t kProtocolVersion = 3;
 
     enum class EMessageType : std::uint8_t {
         // --- jucator -> gazda ---

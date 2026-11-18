@@ -20,18 +20,22 @@ namespace Backend {
         int GetScore() const override;
         int GetBalance() const override;
         int GetBet() const override;
+        bool IsBusted() const override;
 
         std::string name;
         std::vector<Card> hand;
         int score = 0;
         int balance = 0;
         int bet = 0;
+        bool busted = false;
+        bool canPlaceBet = false;  // IGame::CanPlaceBet pentru jucatorul asta
     };
 
     // Starea jocului la un moment dat: ce trimite gazda dupa fiecare anunt.
     struct GameSnapshot {
         EGameState state = EGameState::WaitingForPlayers;
         int currentPlayer = -1;
+        bool canDoubleDown = false;
         std::vector<PlayerSnapshot> players;
         PlayerSnapshot dealer;
     };

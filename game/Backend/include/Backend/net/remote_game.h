@@ -44,6 +44,8 @@ namespace Backend {
         int GetCurrentPlayerIndex() const override;
         const IPlayer* GetPlayer(int playerIndex) const override;
         const IPlayer* GetDealer() const override;
+        bool CanPlaceBet(int playerIndex) const override;
+        bool CanDoubleDown() const override;
 
        private:
         bool SendAction(EMessageType type);

@@ -57,5 +57,11 @@ namespace Backend {
         // nullptr pentru un index invalid.
         virtual const IPlayer* GetPlayer(int playerIndex) const = 0;
         virtual const IPlayer* GetDealer() const = 0;
+
+        // Jucatorul mai are de pus pariul in runda asta: se pariaza, n-a pariat inca si are cel
+        // putin kMinBet (cine nu are e sarit).
+        virtual bool CanPlaceBet(int playerIndex) const = 0;
+        // Jucatorul la rand poate dubla acum: are doar primele doua carti si bani cat pariul.
+        virtual bool CanDoubleDown() const = 0;
     };
 }  // namespace Backend

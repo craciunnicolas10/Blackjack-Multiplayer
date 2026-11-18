@@ -45,9 +45,10 @@ namespace Frontend {
         // ultima carte a dealerului, nu înainte).
         void setPlayerMoney(std::size_t seat, int money);
         void setPlayerBet(std::size_t seat, int bet);
-        // Scorul se vede într-o bulină lângă mână; nullopt o ascunde.
-        void setPlayerScore(std::size_t seat, std::optional<int> score);
-        void setDealerScore(std::optional<int> score);
+        // Scorul se vede într-o bulină lângă mână; nullopt o ascunde. `busted` (spus de joc:
+        // a trecut de 21) face bulina roșie, iar la jucător pornește efectul „Peste 21!”.
+        void setPlayerScore(std::size_t seat, std::optional<int> score, bool busted = false);
+        void setDealerScore(std::optional<int> score, bool busted = false);
 
         // Rangul și culoarea ca în ui/card_textures.h.
         void dealPlayerCard(std::size_t seat, int rank, int suit);
@@ -61,6 +62,8 @@ namespace Frontend {
         // `canAct` = false când jucătorul e pe alt calculator (rețea): butoanele rămân
         // inactive și masa scrie al cui e rândul.
         void setCurrentSeat(std::optional<std::size_t> seat, bool canAct = true);
+        // Double e activ doar când jocul spune că jucătorul la rând poate dubla.
+        void setDoubleDownAllowed(bool allowed);
         std::optional<std::size_t> getCurrentSeat() const;
 
         // Pariuri: panoul apare pentru un jucător (locul lui e evidențiat), iar pariul ales
@@ -126,19 +129,23 @@ namespace Frontend {
         void drawDeck(sf::RenderTarget& target) const;
         void drawLabel(sf::RenderTarget& target, const sf::String& text,
                        sf::Vector2f centerTop) const;
-        void drawScore(sf::RenderTarget& target, const HandView& hand, int score) const;
+        void drawScore(sf::RenderTarget& target, const HandView& hand, int score,
+                       bool busted) const;
 
         AppContext m_context;
         TableBackground m_background;
         std::vector<sf::String> m_playerNames;
         std::vector<SeatView> m_seats;
         std::vector<std::optional<int>> m_scores;
+        std::vector<bool> m_busted;
         std::vector<std::optional<ResultBadge>> m_results;
         std::vector<std::optional<int>> m_pendingMoney;
         std::vector<int> m_money;  // ultima sumă primită de la joc, pentru ecranul de rezultat
         bool m_resultsShown = false;  // etichetele sunt pe ecran și jetoanele au plecat
         HandView m_dealerHand;
         std::optional<int> m_dealerScore;
+        bool m_dealerBusted = false;
+        bool m_doubleDownAllowed = false;
         std::optional<std::size_t> m_currentSeat;
         bool m_canAct = true;
         std::optional<std::size_t> m_bettingSeat;

@@ -16,11 +16,11 @@ namespace Backend {
         int GetScore() const override;
         int GetBalance() const override;
         int GetBet() const override;
+        bool IsBusted() const override;
 
         // Toate cartile, inclusiv cele ascunse (pentru reguli, nu pentru afisare).
         const std::vector<Card>& GetFullHand() const;
         bool HasBlackjack() const;
-        bool IsBusted() const;
         // A pariat in runda curenta, deci joaca.
         bool IsInRound() const;
 

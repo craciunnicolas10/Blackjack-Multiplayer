@@ -13,6 +13,7 @@ namespace Backend {
             snapshot.score = player.GetScore();
             snapshot.balance = player.GetBalance();
             snapshot.bet = player.GetBet();
+            snapshot.busted = player.IsBusted();
             return snapshot;
         }
 
@@ -23,7 +24,7 @@ namespace Backend {
             }
             packet << static_cast<std::int32_t>(player.score)
                    << static_cast<std::int32_t>(player.balance)
-                   << static_cast<std::int32_t>(player.bet);
+                   << static_cast<std::int32_t>(player.bet) << player.busted << player.canPlaceBet;
         }
 
         bool ReadPlayer(sf::Packet& packet, PlayerSnapshot& player) {
@@ -40,7 +41,7 @@ namespace Backend {
             std::int32_t score = 0;
             std::int32_t balance = 0;
             std::int32_t bet = 0;
-            if (!(packet >> score >> balance >> bet)) {
+            if (!(packet >> score >> balance >> bet >> player.busted >> player.canPlaceBet)) {
                 return false;
             }
             player.score = score;
@@ -60,13 +61,17 @@ namespace Backend {
 
     int PlayerSnapshot::GetBet() const { return bet; }
 
+    bool PlayerSnapshot::IsBusted() const { return busted; }
+
     GameSnapshot TakeSnapshot(const IGame& game) {
         GameSnapshot snapshot;
         snapshot.state = game.GetState();
         snapshot.currentPlayer = game.GetCurrentPlayerIndex();
+        snapshot.canDoubleDown = game.CanDoubleDown();
         for (int i = 0; i < game.GetPlayerCount(); ++i) {
             if (const IPlayer* player = game.GetPlayer(i)) {
-                snapshot.players.push_back(SnapshotOf(*player));
+                PlayerSnapshot& added = snapshot.players.emplace_back(SnapshotOf(*player));
+                added.canPlaceBet = game.CanPlaceBet(i);
             }
         }
         if (const IPlayer* dealer = game.GetDealer()) {
@@ -77,7 +82,7 @@ namespace Backend {
 
     void WriteSnapshot(sf::Packet& packet, const GameSnapshot& snapshot) {
         packet << static_cast<std::uint8_t>(snapshot.state)
-               << static_cast<std::int32_t>(snapshot.currentPlayer)
+               << static_cast<std::int32_t>(snapshot.currentPlayer) << snapshot.canDoubleDown
                << static_cast<std::uint8_t>(snapshot.players.size());
         for (const PlayerSnapshot& player : snapshot.players) {
             WritePlayer(packet, player);
@@ -89,7 +94,8 @@ namespace Backend {
         std::int32_t currentPlayer = 0;
         std::uint8_t playerCount = 0;
         if (!ReadEnum(packet, snapshot.state, kLastGameState) ||
-            !(packet >> currentPlayer >> playerCount) || playerCount > kMaxPlayers) {
+            !(packet >> currentPlayer >> snapshot.canDoubleDown >> playerCount) ||
+            playerCount > kMaxPlayers) {
             return false;
         }
         snapshot.currentPlayer = currentPlayer;

@@ -93,14 +93,14 @@ namespace Frontend {
     }
 
     void RoundSummaryPanel::open(const std::vector<RoundSummaryRow>& rows,
-                                 std::optional<int> dealerScore) {
+                                 std::optional<int> dealerScore, bool dealerBusted) {
         m_gameOver = false;
         m_nextButton.setEnabled(true);
         setTitle(utf8("Rezultatele rundei"));
 
         if (dealerScore) {
             std::string line = "Dealer: " + std::to_string(*dealerScore);
-            if (*dealerScore > 21) {
+            if (dealerBusted) {
                 line += ", peste 21";
             }
             m_dealerLine.setString(utf8(line));

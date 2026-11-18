@@ -16,5 +16,7 @@ namespace Backend {
         virtual int GetScore() const = 0;
         virtual int GetBalance() const = 0;
         virtual int GetBet() const = 0;
+        // A trecut de 21 (a pierdut runda, oricum ar juca dealerul).
+        virtual bool IsBusted() const = 0;
     };
 }  // namespace Backend

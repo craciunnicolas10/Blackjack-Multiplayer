@@ -77,17 +77,18 @@ namespace Backend {
     }
 
     bool Game::PlaceBet(int playerIndex, int amount) {
-        if (m_state != EGameState::Betting || !IsValidPlayerIndex(playerIndex)) {
+        if (!CanPlaceBet(playerIndex)) {
             return false;
         }
-        Player& player = *m_players[playerIndex];
-        if (player.IsInRound() || amount < kMinBet || amount > kMaxBet ||
-            amount > player.GetBalance()) {
+        Player& player = PlayerAt(playerIndex);
+        if (amount < kMinBet || amount > kMaxBet || amount > player.GetBalance()) {
             return false;
         }
         player.AddToBet(amount);
         Notify([&](IGameListener& listener) { listener.OnBetPlaced(playerIndex, amount); });
-        if (AllBetsPlaced()) {
+        // Un ascultator poate fi pus un pariu chiar in timpul anuntului (si runda sa se fi
+        // jucat deja); impartim doar daca inca se pariaza.
+        if (m_state == EGameState::Betting && AllBetsPlaced()) {
             DealInitialCards();
         }
         return true;
@@ -97,9 +98,13 @@ namespace Backend {
         if (m_state != EGameState::PlayersTurn) {
             return false;
         }
-        DealToPlayer(m_currentPlayer);
-        if (CurrentPlayer().GetScore() >= kBlackjackScore) {
-            GiveTurnFrom(m_currentPlayer + 1);
+        const int playerIndex = m_currentPlayer;
+        DealToPlayer(playerIndex);
+        // Ca la PlaceBet: daca un ascultator a schimbat deja randul, nu-l mai schimbam si noi.
+        const bool stillMyTurn =
+            m_state == EGameState::PlayersTurn && m_currentPlayer == playerIndex;
+        if (stillMyTurn && PlayerAt(playerIndex).GetScore() >= kBlackjackScore) {
+            GiveTurnFrom(playerIndex + 1);
         }
         return true;
     }
@@ -113,21 +118,18 @@ namespace Backend {
     }
 
     bool Game::DoubleDown() {
-        if (m_state != EGameState::PlayersTurn) {
+        if (!CanDoubleDown()) {
             return false;
         }
         Player& player = CurrentPlayer();
-        const int extraBet = player.GetBet();
-        if (player.GetFullHand().size() != kInitialCardsPerHand ||
-            player.GetBalance() < extraBet) {
-            return false;
-        }
-        player.AddToBet(extraBet);
+        player.AddToBet(player.GetBet());
         const int playerIndex = m_currentPlayer;
         const int totalBet = player.GetBet();
         Notify([&](IGameListener& listener) { listener.OnBetPlaced(playerIndex, totalBet); });
         DealToPlayer(playerIndex);
-        GiveTurnFrom(playerIndex + 1);
+        if (m_state == EGameState::PlayersTurn && m_currentPlayer == playerIndex) {
+            GiveTurnFrom(playerIndex + 1);
+        }
         return true;
     }
 
@@ -140,10 +142,27 @@ namespace Backend {
     int Game::GetCurrentPlayerIndex() const { return m_currentPlayer; }
 
     const IPlayer* Game::GetPlayer(int playerIndex) const {
-        return IsValidPlayerIndex(playerIndex) ? m_players[playerIndex].get() : nullptr;
+        return IsValidPlayerIndex(playerIndex) ? &PlayerAt(playerIndex) : nullptr;
     }
 
     const IPlayer* Game::GetDealer() const { return &m_dealer; }
+
+    bool Game::CanPlaceBet(int playerIndex) const {
+        if (m_state != EGameState::Betting || !IsValidPlayerIndex(playerIndex)) {
+            return false;
+        }
+        const Player& player = PlayerAt(playerIndex);
+        return !player.IsInRound() && CanAffordMinBet(player);
+    }
+
+    bool Game::CanDoubleDown() const {
+        if (m_state != EGameState::PlayersTurn || !IsValidPlayerIndex(m_currentPlayer)) {
+            return false;
+        }
+        const Player& player = PlayerAt(m_currentPlayer);
+        return player.GetFullHand().size() == static_cast<std::size_t>(kInitialCardsPerHand) &&
+               player.GetBalance() >= player.GetBet();
+    }
 
     // --- Ajutatoare ---
 
@@ -165,7 +184,15 @@ namespace Backend {
         });
     }
 
-    Player& Game::CurrentPlayer() { return *m_players[m_currentPlayer]; }
+    Player& Game::CurrentPlayer() { return PlayerAt(m_currentPlayer); }
+
+    Player& Game::PlayerAt(int playerIndex) {
+        return *m_players[static_cast<std::size_t>(playerIndex)];
+    }
+
+    const Player& Game::PlayerAt(int playerIndex) const {
+        return *m_players[static_cast<std::size_t>(playerIndex)];
+    }
 
     // --- Desfasurarea rundei ---
 
@@ -173,7 +200,7 @@ namespace Backend {
         m_deck->Shuffle();
         for (int pass = 0; pass < kInitialCardsPerHand; ++pass) {
             for (int playerIndex = 0; playerIndex < GetPlayerCount(); ++playerIndex) {
-                if (m_players[playerIndex]->IsInRound()) {
+                if (PlayerAt(playerIndex).IsInRound()) {
                     DealToPlayer(playerIndex);
                 }
             }
@@ -186,7 +213,7 @@ namespace Backend {
 
     void Game::DealToPlayer(int playerIndex) {
         const Card card = m_deck->Draw();
-        m_players[playerIndex]->AddCard(card);
+        PlayerAt(playerIndex).AddCard(card);
         Notify([&](IGameListener& listener) { listener.OnPlayerCardDealt(playerIndex, card); });
     }
 
@@ -202,7 +229,7 @@ namespace Backend {
 
     void Game::GiveTurnFrom(int fromIndex) {
         for (int playerIndex = fromIndex; playerIndex < GetPlayerCount(); ++playerIndex) {
-            const Player& player = *m_players[playerIndex];
+            const Player& player = PlayerAt(playerIndex);
             if (player.IsInRound() && player.GetScore() < kBlackjackScore) {
                 m_currentPlayer = playerIndex;
                 Notify([&](IGameListener& listener) { listener.OnTurnChanged(playerIndex); });
@@ -234,7 +261,7 @@ namespace Backend {
 
     void Game::SettleRound() {
         for (int playerIndex = 0; playerIndex < GetPlayerCount(); ++playerIndex) {
-            Player& player = *m_players[playerIndex];
+            Player& player = PlayerAt(playerIndex);
             if (!player.IsInRound()) {
                 continue;
             }

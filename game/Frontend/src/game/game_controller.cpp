@@ -114,23 +114,26 @@ namespace Frontend {
     void GameController::OnPlayerCardDealt(int playerIndex, Backend::Card card) {
         const auto seat = static_cast<std::size_t>(playerIndex);
         m_table.dealPlayerCard(seat, rankOf(card), suitOf(card));
-        m_table.setPlayerScore(seat, m_game->GetPlayer(playerIndex)->GetScore());
+        const Backend::IPlayer* player = m_game->GetPlayer(playerIndex);
+        m_table.setPlayerScore(seat, player->GetScore(), player->IsBusted());
+        m_table.setDoubleDownAllowed(m_game->CanDoubleDown());
     }
 
     void GameController::OnDealerCardDealt(Backend::Card card, bool isFaceDown) {
         m_table.dealDealerCard(rankOf(card), suitOf(card), isFaceDown);
         // Cât timp o carte e cu fața în jos, jocul dă doar scorul cărților vizibile.
-        m_table.setDealerScore(m_game->GetDealer()->GetScore());
+        showDealerScore();
     }
 
     void GameController::OnDealerCardRevealed(Backend::Card card) {
         m_table.revealDealerCard(rankOf(card), suitOf(card));
-        m_table.setDealerScore(m_game->GetDealer()->GetScore());
+        showDealerScore();
     }
 
     void GameController::OnTurnChanged(int playerIndex) {
         const auto seat = static_cast<std::size_t>(playerIndex);
         m_table.setCurrentSeat(seat, isLocal(seat));
+        m_table.setDoubleDownAllowed(m_game->CanDoubleDown());
     }
 
     void GameController::OnRoundEnded(int playerIndex, Backend::ERoundResult result) {
@@ -152,10 +155,7 @@ namespace Frontend {
     void GameController::askNextBet() {
         for (std::size_t seat = 0; seat < seatCount(); ++seat) {
             const int balance = balanceOf(seat);
-            const bool alreadyBet = m_game->GetPlayer(static_cast<int>(seat))->GetBet() > 0;
-            // Jocul sare peste cine nu are nici pariul minim (vezi IGame.h), deci nici masa
-            // nu îl întreabă.
-            if (!alreadyBet && balance >= Backend::kMinBet) {
+            if (m_game->CanPlaceBet(static_cast<int>(seat))) {
                 m_bettingSeat = seat;
                 if (isLocal(seat)) {
                     m_table.startBetting(seat, balance, Backend::kMinBet, Backend::kMaxBet,
@@ -179,6 +179,11 @@ namespace Frontend {
     }
 
     // --- Ajutătoare ---
+
+    void GameController::showDealerScore() {
+        const Backend::IPlayer* dealer = m_game->GetDealer();
+        m_table.setDealerScore(dealer->GetScore(), dealer->IsBusted());
+    }
 
     int GameController::balanceOf(std::size_t seat) const {
         const Backend::IPlayer* player = m_game->GetPlayer(static_cast<int>(seat));

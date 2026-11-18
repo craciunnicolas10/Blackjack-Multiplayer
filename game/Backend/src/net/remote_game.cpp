@@ -57,4 +57,13 @@ namespace Backend {
     }
 
     const IPlayer* RemoteGame::GetDealer() const { return &m_snapshot.dealer; }
+
+    bool RemoteGame::CanPlaceBet(int playerIndex) const {
+        if (playerIndex < 0 || playerIndex >= GetPlayerCount()) {
+            return false;
+        }
+        return m_snapshot.players[static_cast<std::size_t>(playerIndex)].canPlaceBet;
+    }
+
+    bool RemoteGame::CanDoubleDown() const { return m_snapshot.canDoubleDown; }
 }  // namespace Backend

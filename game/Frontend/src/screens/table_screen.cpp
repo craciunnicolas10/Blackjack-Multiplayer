@@ -47,6 +47,7 @@ namespace Frontend {
           m_background(context.font),
           m_playerNames(std::move(playerNames)),
           m_scores(m_playerNames.size()),
+          m_busted(m_playerNames.size(), false),
           m_results(m_playerNames.size()),
           m_pendingMoney(m_playerNames.size()),
           m_money(m_playerNames.size(), 0),
@@ -179,7 +180,7 @@ namespace Frontend {
         // Scorul dealerului apare după ce s-a întors cartea, ca să nu dea de gol cartea ascunsă.
         const bool dealerSettled = !m_pendingReveal && !m_dealerHand.isAnimating();
         if (m_dealerScore && m_dealerHand.getCardCount() > 0 && dealerSettled) {
-            drawScore(target, m_dealerHand, *m_dealerScore);
+            drawScore(target, m_dealerHand, *m_dealerScore, m_dealerBusted);
         }
 
         for (std::size_t seat = 0; seat < m_seats.size(); ++seat) {
@@ -187,7 +188,7 @@ namespace Frontend {
             m_seats[seat].draw(target);
             // Scorul apare după ce ajung cărțile, ca să nu arate o carte care e încă pe drum.
             if (m_scores[seat] && hand.getCardCount() > 0 && !hand.isAnimating()) {
-                drawScore(target, hand, *m_scores[seat]);
+                drawScore(target, hand, *m_scores[seat], m_busted[seat]);
             }
             // Rezultatele apar abia după ce au ajuns toate cărțile, altfel s-ar vedea înainte
             // de cartea care a decis runda.
@@ -227,16 +228,25 @@ namespace Frontend {
 
     void TableScreen::setPlayerBet(std::size_t seat, int bet) { m_seats.at(seat).setBet(bet); }
 
-    void TableScreen::setPlayerScore(std::size_t seat, std::optional<int> score) {
+    void TableScreen::setPlayerScore(std::size_t seat, std::optional<int> score, bool busted) {
         m_scores.at(seat) = score;
-        // Peste 21: mâna se scutură și apare „Peste 21!” după ce ajunge ultima carte.
+        m_busted.at(seat) = busted;
+        // Mâna se scutură și apare „Peste 21!” după ce ajunge ultima carte.
         SeatView& seatView = m_seats[seat];
-        if (score && *score > 21 && !seatView.isBustShown()) {
+        if (busted && !seatView.isBustShown()) {
             seatView.showBust();
         }
     }
 
-    void TableScreen::setDealerScore(std::optional<int> score) { m_dealerScore = score; }
+    void TableScreen::setDealerScore(std::optional<int> score, bool busted) {
+        m_dealerScore = score;
+        m_dealerBusted = busted;
+    }
+
+    void TableScreen::setDoubleDownAllowed(bool allowed) {
+        m_doubleDownAllowed = allowed;
+        refreshActionButtons();
+    }
 
     void TableScreen::dealPlayerCard(std::size_t seat, int rank, int suit) {
         m_seats.at(seat).getHand().dealCard(rank, suit, true, kDeckPosition, takeDealDelay());
@@ -326,6 +336,7 @@ namespace Frontend {
         for (std::size_t seat = 0; seat < m_seats.size(); ++seat) {
             m_seats[seat].getHand().clear();
             m_scores[seat].reset();
+            m_busted[seat] = false;
             m_results[seat].reset();
         }
         m_resultsShown = false;
@@ -334,6 +345,8 @@ namespace Frontend {
         m_nextRoundRequested = false;
         m_dealerHand.clear();
         m_dealerScore.reset();
+        m_dealerBusted = false;
+        m_doubleDownAllowed = false;
         m_pendingReveal.reset();
         m_dealQueue = 0.f;
         endBetting();
@@ -435,7 +448,7 @@ namespace Frontend {
                                 (*m_summaryNet)[seat], m_money[seat]});
             }
         }
-        m_summaryPanel.open(rows, m_dealerScore);
+        m_summaryPanel.open(rows, m_dealerScore, m_dealerBusted);
         m_summaryVisible = true;
     }
 
@@ -455,9 +468,7 @@ namespace Frontend {
         const bool myTurn = m_currentSeat.has_value() && m_canAct && !m_bettingSeat.has_value();
         m_hitButton.setEnabled(myTurn);
         m_standButton.setEnabled(myTurn);
-        // Double se poate cere doar pe primele două cărți. Dacă regula e alta, se schimbă aici.
-        m_doubleButton.setEnabled(myTurn &&
-                                  m_seats[*m_currentSeat].getHand().getCardCount() == 2);
+        m_doubleButton.setEnabled(myTurn && m_doubleDownAllowed);
     }
 
     void TableScreen::refreshSeatHighlight() {
@@ -541,14 +552,15 @@ namespace Frontend {
     }
 
     // Bulina cu scorul, pe colțul din dreapta-sus al mâinii. Roșie peste 21.
-    void TableScreen::drawScore(sf::RenderTarget& target, const HandView& hand, int score) const {
+    void TableScreen::drawScore(sf::RenderTarget& target, const HandView& hand, int score,
+                                bool busted) const {
         const sf::FloatRect bounds = hand.getBounds();
         const sf::Vector2f center{bounds.position.x + bounds.size.x, bounds.position.y};
 
         sf::CircleShape bubble(kScoreRadius);
         bubble.setOrigin({kScoreRadius, kScoreRadius});
         bubble.setPosition(center);
-        bubble.setFillColor(score > 21 ? Theme::kDanger : sf::Color(20, 20, 20));
+        bubble.setFillColor(busted ? Theme::kDanger : sf::Color(20, 20, 20));
         bubble.setOutlineColor(Theme::kGold);
         bubble.setOutlineThickness(2.f);
         target.draw(bubble);

@@ -33,6 +33,8 @@ namespace Backend {
         int GetCurrentPlayerIndex() const override;
         const IPlayer* GetPlayer(int playerIndex) const override;
         const IPlayer* GetDealer() const override;
+        bool CanPlaceBet(int playerIndex) const override;
+        bool CanDoubleDown() const override;
 
        private:
         static constexpr int kNoPlayer = -1;
@@ -56,6 +58,9 @@ namespace Backend {
         static bool CanAffordMinBet(const Player& player);
         bool AllBetsPlaced() const;
         Player& CurrentPlayer();
+        // Indexul vine ca int din API; aici se face o singura data conversia.
+        Player& PlayerAt(int playerIndex);
+        const Player& PlayerAt(int playerIndex) const;
 
         void DealInitialCards();
         void DealToPlayer(int playerIndex);

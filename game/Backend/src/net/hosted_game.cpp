@@ -44,4 +44,8 @@ namespace Backend {
     }
 
     const IPlayer* HostedGame::GetDealer() const { return m_game->GetDealer(); }
+
+    bool HostedGame::CanPlaceBet(int playerIndex) const { return m_game->CanPlaceBet(playerIndex); }
+
+    bool HostedGame::CanDoubleDown() const { return m_game->CanDoubleDown(); }
 }  // namespace Backend

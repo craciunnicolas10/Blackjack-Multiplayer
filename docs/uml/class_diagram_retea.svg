@@ -1,0 +1,279 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2420" height="1640" viewBox="0 0 2420 1640" font-family="DejaVu Sans, Arial, sans-serif">
+<defs>
+<marker id="tri" viewBox="0 0 14 14" refX="13" refY="7" markerWidth="14" markerHeight="14" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M1,1 L13,7 L1,13 z" fill="#ffffff" stroke="#444" stroke-width="1.3"/></marker>
+<marker id="open" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M1,1 L11,6 L1,11" fill="none" stroke="#444" stroke-width="1.4"/></marker>
+<marker id="diamond" viewBox="0 0 20 12" refX="1" refY="6" markerWidth="20" markerHeight="12" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,6 L10,1 L19,6 L10,11 z" fill="#ffffff" stroke="#444" stroke-width="1.3"/></marker>
+<marker id="diamondFilled" viewBox="0 0 20 12" refX="1" refY="6" markerWidth="20" markerHeight="12" orient="auto" markerUnits="userSpaceOnUse"><path d="M1,6 L10,1 L19,6 L10,11 z" fill="#444" stroke="#444" stroke-width="1.3"/></marker>
+</defs>
+<rect width="2420" height="1640" fill="#ffffff"/>
+<text x="1210" y="40" text-anchor="middle" font-size="20" font-weight="bold" fill="#222">Blackjack Multiplayer – Class Diagram: jocul în rețea</text>
+<rect x="520" y="70" width="1880" height="1400" rx="6" fill="none" stroke="#888" stroke-width="1.4" stroke-dasharray="10,6"/>
+<text x="532" y="92" font-size="15" font-weight="bold" fill="#555">Backend (DLL)</text>
+<rect x="25" y="70" width="470" height="1400" rx="6" fill="none" stroke="#888" stroke-width="1.4" stroke-dasharray="10,6"/>
+<text x="37" y="92" font-size="15" font-weight="bold" fill="#555">Frontend (executabil)</text>
+<rect x="560" y="110" width="312" height="161" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+<text x="716.0" y="130" text-anchor="middle" font-size="12" fill="#333">«interface»</text>
+<text x="716.0" y="148" text-anchor="middle" font-size="15" font-weight="bold" font-style="italic" fill="#111">INetworkListener</text>
+<line x1="560" y1="158" x2="872" y2="158" stroke="#2563eb" stroke-width="1.2"/>
+<line x1="560" y1="159" x2="872" y2="159" stroke="#2563eb" stroke-width="1.2"/>
+<text x="570" y="176" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+OnPlayersChanged(names: vector&lt;string&gt;)</text>
+<text x="570" y="193" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+OnJoinRejected(reason: EJoinRejection)</text>
+<text x="570" y="210" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+OnGameStarted()</text>
+<text x="570" y="227" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+OnGameOver()</text>
+<text x="570" y="244" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+OnPlayerLeft(name: string)</text>
+<text x="570" y="261" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+OnHostLeft()</text>
+<rect x="1000" y="110" width="384" height="178" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+<text x="1192.0" y="130" text-anchor="middle" font-size="12" fill="#333">«interface»</text>
+<text x="1192.0" y="148" text-anchor="middle" font-size="15" font-weight="bold" font-style="italic" fill="#111">INetworkSession</text>
+<line x1="1000" y1="158" x2="1384" y2="158" stroke="#2563eb" stroke-width="1.2"/>
+<line x1="1000" y1="159" x2="1384" y2="159" stroke="#2563eb" stroke-width="1.2"/>
+<text x="1010" y="176" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+AddListener(listener: weak_ptr&lt;INetworkListener&gt;)</text>
+<text x="1010" y="193" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+RemoveListener(listener: INetworkListener*)</text>
+<text x="1010" y="210" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+Update()</text>
+<text x="1010" y="227" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+IsHost(): bool</text>
+<text x="1010" y="244" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+GetPlayerNames(): vector&lt;string&gt;</text>
+<text x="1010" y="261" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+GetLocalSeat(): int</text>
+<text x="1010" y="278" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+GetGame(): shared_ptr&lt;IGame&gt;</text>
+<rect x="1500" y="110" width="170" height="127" fill="#dcfce7" stroke="#16a34a" stroke-width="1.6"/>
+<text x="1585.0" y="130" text-anchor="middle" font-size="12" fill="#333">«enumeration»</text>
+<text x="1585.0" y="148" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">EConnectResult</text>
+<line x1="1500" y1="158" x2="1670" y2="158" stroke="#16a34a" stroke-width="1.2"/>
+<text x="1510" y="175" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">Connected</text>
+<text x="1510" y="192" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">InvalidName</text>
+<text x="1510" y="209" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">InvalidAddress</text>
+<text x="1510" y="226" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">Unreachable</text>
+<line x1="1500" y1="236" x2="1670" y2="236" stroke="#16a34a" stroke-width="1.2"/>
+<rect x="1700" y="110" width="170" height="127" fill="#dcfce7" stroke="#16a34a" stroke-width="1.6"/>
+<text x="1785.0" y="130" text-anchor="middle" font-size="12" fill="#333">«enumeration»</text>
+<text x="1785.0" y="148" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">EJoinRejection</text>
+<line x1="1700" y1="158" x2="1870" y2="158" stroke="#16a34a" stroke-width="1.2"/>
+<text x="1710" y="175" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">DifferentVersion</text>
+<text x="1710" y="192" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">TableFull</text>
+<text x="1710" y="209" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">InvalidName</text>
+<text x="1710" y="226" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">NameTaken</text>
+<line x1="1700" y1="236" x2="1870" y2="236" stroke="#16a34a" stroke-width="1.2"/>
+<rect x="660" y="400" width="399" height="153" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+<text x="859.5" y="420" text-anchor="middle" font-size="12" fill="#333">«interface»</text>
+<text x="859.5" y="438" text-anchor="middle" font-size="15" font-weight="bold" font-style="italic" fill="#111">INetworkHost</text>
+<line x1="660" y1="448" x2="1059" y2="448" stroke="#2563eb" stroke-width="1.2"/>
+<text x="670" y="465" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" text-decoration="underline">+kDefaultPort: unsigned short = 53000</text>
+<line x1="660" y1="475" x2="1059" y2="475" stroke="#2563eb" stroke-width="1.2"/>
+<text x="670" y="492" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" text-decoration="underline">+Produce(hostName: string): shared_ptr&lt;INetworkHost&gt;</text>
+<text x="670" y="509" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+GetAddress(): string</text>
+<text x="670" y="526" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+CanStartGame(): bool</text>
+<text x="670" y="543" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" font-style="italic">+StartGame(): bool</text>
+<rect x="1230" y="400" width="573" height="76" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+<text x="1516.5" y="420" text-anchor="middle" font-size="12" fill="#333">«interface»</text>
+<text x="1516.5" y="438" text-anchor="middle" font-size="15" font-weight="bold" font-style="italic" fill="#111">INetworkClient</text>
+<line x1="1230" y1="448" x2="1803" y2="448" stroke="#2563eb" stroke-width="1.2"/>
+<line x1="1230" y1="449" x2="1803" y2="449" stroke="#2563eb" stroke-width="1.2"/>
+<text x="1240" y="466" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917" text-decoration="underline">+Produce(address, name, result: EConnectResult&amp;): shared_ptr&lt;INetworkClient&gt;</text>
+<rect x="1240" y="1110" width="210" height="75" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+<text x="1345.0" y="1130" text-anchor="middle" font-size="12" fill="#333">«interface»</text>
+<text x="1345.0" y="1148" text-anchor="middle" font-size="15" font-weight="bold" font-style="italic" fill="#111">IGame</text>
+<line x1="1240" y1="1158" x2="1450" y2="1158" stroke="#2563eb" stroke-width="1.2"/>
+<text x="1250" y="1175" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">(vezi diagrama principală)</text>
+<rect x="1240" y="1320" width="210" height="75" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+<text x="1345.0" y="1340" text-anchor="middle" font-size="12" fill="#333">«interface»</text>
+<text x="1345.0" y="1358" text-anchor="middle" font-size="15" font-weight="bold" font-style="italic" fill="#111">IGameListener</text>
+<line x1="1240" y1="1368" x2="1450" y2="1368" stroke="#2563eb" stroke-width="1.2"/>
+<text x="1250" y="1385" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">(vezi diagrama principală)</text>
+<rect x="2090" y="1320" width="210" height="75" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+<text x="2195.0" y="1340" text-anchor="middle" font-size="12" fill="#333">«interface»</text>
+<text x="2195.0" y="1358" text-anchor="middle" font-size="15" font-weight="bold" font-style="italic" fill="#111">IPlayer</text>
+<line x1="2090" y1="1368" x2="2300" y2="1368" stroke="#2563eb" stroke-width="1.2"/>
+<text x="2100" y="1385" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">(vezi diagrama principală)</text>
+<rect x="560" y="650" width="341" height="373" fill="#f5f5f4" stroke="#57534e" stroke-width="1.6"/>
+<text x="730.5" y="670" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">NetworkHost</text>
+<line x1="560" y1="680" x2="901" y2="680" stroke="#57534e" stroke-width="1.2"/>
+<text x="570" y="697" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_hostName: string</text>
+<text x="570" y="714" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_listener: TcpListener</text>
+<text x="570" y="731" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_port: unsigned short</text>
+<text x="570" y="748" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_connections: vector&lt;Connection&gt;</text>
+<text x="570" y="765" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_listeners: ListenerList&lt;INetworkListener&gt;</text>
+<text x="570" y="782" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_realGame: shared_ptr&lt;IGame&gt;</text>
+<text x="570" y="799" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_game: shared_ptr&lt;HostedGame&gt;</text>
+<text x="570" y="816" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_encoder: shared_ptr&lt;EventEncoder&gt;</text>
+<line x1="560" y1="826" x2="901" y2="826" stroke="#57534e" stroke-width="1.2"/>
+<text x="570" y="843" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+Listen(): bool</text>
+<text x="570" y="860" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">+ metodele din INetworkHost (override)</text>
+<text x="570" y="877" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-AcceptConnections()</text>
+<text x="570" y="894" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-ReceiveMessages()</text>
+<text x="570" y="911" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-HandleJoin(connection, packet): bool</text>
+<text x="570" y="928" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-Reject(connection, reason: EJoinRejection)</text>
+<text x="570" y="945" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-HandleAction(connection, type, packet)</text>
+<text x="570" y="962" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-BroadcastPlayerList()</text>
+<text x="570" y="979" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-Broadcast(packet)</text>
+<text x="570" y="996" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-OnStartRoundRefused()</text>
+<text x="570" y="1013" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-StopGame(leaverName: string)</text>
+<rect x="1230" y="650" width="341" height="220" fill="#f5f5f4" stroke="#57534e" stroke-width="1.6"/>
+<text x="1400.5" y="670" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">NetworkClient</text>
+<line x1="1230" y1="680" x2="1571" y2="680" stroke="#57534e" stroke-width="1.2"/>
+<text x="1240" y="697" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_socket: unique_ptr&lt;TcpSocket&gt;</text>
+<text x="1240" y="714" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_listeners: ListenerList&lt;INetworkListener&gt;</text>
+<text x="1240" y="731" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_names: vector&lt;string&gt;</text>
+<text x="1240" y="748" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_seat: int</text>
+<text x="1240" y="765" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_game: shared_ptr&lt;RemoteGame&gt;</text>
+<line x1="1230" y1="775" x2="1571" y2="775" stroke="#57534e" stroke-width="1.2"/>
+<text x="1240" y="792" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">+ metodele din INetworkClient (override)</text>
+<text x="1240" y="809" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-HandleMessage(packet): bool</text>
+<text x="1240" y="826" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-StartGame(packet): bool</text>
+<text x="1240" y="843" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-Send(packet)</text>
+<text x="1240" y="860" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-Close()</text>
+<rect x="1790" y="650" width="319" height="152" fill="#f5f5f4" stroke="#57534e" stroke-width="1.6"/>
+<text x="1949.5" y="670" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">RemoteGame  (Proxy)</text>
+<line x1="1790" y1="680" x2="2109" y2="680" stroke="#57534e" stroke-width="1.2"/>
+<text x="1800" y="697" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_send: function&lt;void(Packet&amp;)&gt;</text>
+<text x="1800" y="714" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_listeners: ListenerList&lt;IGameListener&gt;</text>
+<text x="1800" y="731" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_snapshot: GameSnapshot</text>
+<line x1="1790" y1="741" x2="2109" y2="741" stroke="#57534e" stroke-width="1.2"/>
+<text x="1800" y="758" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+ApplyEvent(event: DecodedEvent)</text>
+<text x="1800" y="775" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">+ metodele din IGame (override)</text>
+<text x="1800" y="792" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-SendAction(type): bool</text>
+<rect x="620" y="1120" width="312" height="101" fill="#f5f5f4" stroke="#57534e" stroke-width="1.6"/>
+<text x="776.0" y="1140" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">HostedGame  (Decorator)</text>
+<line x1="620" y1="1150" x2="932" y2="1150" stroke="#57534e" stroke-width="1.2"/>
+<text x="630" y="1167" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_game: shared_ptr&lt;IGame&gt;</text>
+<text x="630" y="1184" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_onStartRoundRefused: function&lt;void()&gt;</text>
+<line x1="620" y1="1194" x2="932" y2="1194" stroke="#57534e" stroke-width="1.2"/>
+<text x="630" y="1211" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">+ metodele din IGame (override)</text>
+<rect x="620" y="1300" width="304" height="135" fill="#f5f5f4" stroke="#57534e" stroke-width="1.6"/>
+<text x="772.0" y="1320" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">EventEncoder</text>
+<line x1="620" y1="1330" x2="924" y2="1330" stroke="#57534e" stroke-width="1.2"/>
+<text x="630" y="1347" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_game: const IGame&amp;</text>
+<text x="630" y="1364" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_send: function&lt;void(Packet&amp;)&gt;</text>
+<line x1="620" y1="1374" x2="924" y2="1374" stroke="#57534e" stroke-width="1.2"/>
+<text x="630" y="1391" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">+ metodele din IGameListener (override)</text>
+<text x="630" y="1408" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-Begin(type: EEventType): Packet</text>
+<text x="630" y="1425" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-Finish(packet)</text>
+<rect x="1720" y="960" width="254" height="144" fill="#f5f5f4" stroke="#57534e" stroke-width="1.6"/>
+<text x="1847.0" y="980" text-anchor="middle" font-size="12" fill="#333">«struct»</text>
+<text x="1847.0" y="998" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">GameSnapshot</text>
+<line x1="1720" y1="1008" x2="1974" y2="1008" stroke="#57534e" stroke-width="1.2"/>
+<text x="1730" y="1025" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+state: EGameState</text>
+<text x="1730" y="1042" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+currentPlayer: int</text>
+<text x="1730" y="1059" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+canDoubleDown: bool</text>
+<text x="1730" y="1076" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+players: vector&lt;PlayerSnapshot&gt;</text>
+<text x="1730" y="1093" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+dealer: PlayerSnapshot</text>
+<line x1="1720" y1="1103" x2="1974" y2="1103" stroke="#57534e" stroke-width="1.2"/>
+<rect x="2090" y="960" width="261" height="135" fill="#f5f5f4" stroke="#57534e" stroke-width="1.6"/>
+<text x="2220.5" y="980" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">PlayerSnapshot</text>
+<line x1="2090" y1="990" x2="2351" y2="990" stroke="#57534e" stroke-width="1.2"/>
+<text x="2100" y="1007" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+name: string</text>
+<text x="2100" y="1024" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+hand: vector&lt;Card&gt;</text>
+<text x="2100" y="1041" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+score, balance, bet: int</text>
+<text x="2100" y="1058" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+busted, canPlaceBet: bool</text>
+<line x1="2090" y1="1068" x2="2351" y2="1068" stroke="#57534e" stroke-width="1.2"/>
+<text x="2100" y="1085" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">+ metodele din IPlayer (override)</text>
+<rect x="1940" y="110" width="312" height="118" fill="#f5f5f4" stroke="#57534e" stroke-width="1.6"/>
+<text x="2096.0" y="130" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">ListenerList&lt;Listener&gt;</text>
+<line x1="1940" y1="140" x2="2252" y2="140" stroke="#57534e" stroke-width="1.2"/>
+<text x="1950" y="157" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_listeners: vector&lt;weak_ptr&lt;Listener&gt;&gt;</text>
+<line x1="1940" y1="167" x2="2252" y2="167" stroke="#57534e" stroke-width="1.2"/>
+<text x="1950" y="184" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+Add(listener: weak_ptr&lt;Listener&gt;)</text>
+<text x="1950" y="201" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+Remove(listener: Listener*)</text>
+<text x="1950" y="218" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+Notify(callback)</text>
+<text x="1940" y="246" font-size="12" fill="#57534e">folosită de NetworkHost, NetworkClient, RemoteGame</text>
+<rect x="40" y="110" width="326" height="169" fill="#ffffff" stroke="#57534e" stroke-width="1.6"/>
+<text x="203.0" y="130" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">NetworkEvents</text>
+<line x1="40" y1="140" x2="366" y2="140" stroke="#57534e" stroke-width="1.2"/>
+<text x="50" y="157" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+onPlayersChanged: function</text>
+<text x="50" y="174" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+onJoinRejected: function</text>
+<text x="50" y="191" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+onGameStarted: function</text>
+<text x="50" y="208" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+onGameOver: function</text>
+<text x="50" y="225" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+onPlayerLeft: function</text>
+<text x="50" y="242" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+onHostLeft: function</text>
+<line x1="40" y1="252" x2="366" y2="252" stroke="#57534e" stroke-width="1.2"/>
+<text x="50" y="269" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">+ metodele din INetworkListener (override)</text>
+<rect x="40" y="410" width="283" height="118" fill="#ffffff" stroke="#57534e" stroke-width="1.6"/>
+<text x="181.5" y="430" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">HostLobbyScreen</text>
+<line x1="40" y1="440" x2="323" y2="440" stroke="#57534e" stroke-width="1.2"/>
+<text x="50" y="457" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_host: shared_ptr&lt;INetworkHost&gt;</text>
+<text x="50" y="474" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_events: shared_ptr&lt;NetworkEvents&gt;</text>
+<line x1="40" y1="484" x2="323" y2="484" stroke="#57534e" stroke-width="1.2"/>
+<text x="50" y="501" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-createGame()</text>
+<text x="50" y="518" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-openTable()</text>
+<rect x="40" y="590" width="290" height="118" fill="#ffffff" stroke="#57534e" stroke-width="1.6"/>
+<text x="185.0" y="610" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">JoinLobbyScreen</text>
+<line x1="40" y1="620" x2="330" y2="620" stroke="#57534e" stroke-width="1.2"/>
+<text x="50" y="637" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_client: shared_ptr&lt;INetworkClient&gt;</text>
+<text x="50" y="654" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_events: shared_ptr&lt;NetworkEvents&gt;</text>
+<line x1="40" y1="664" x2="330" y2="664" stroke="#57534e" stroke-width="1.2"/>
+<text x="50" y="681" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-connect()</text>
+<text x="50" y="698" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-openTable()</text>
+<rect x="40" y="790" width="319" height="135" fill="#ffffff" stroke="#57534e" stroke-width="1.6"/>
+<text x="199.5" y="810" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">NetworkSession</text>
+<line x1="40" y1="820" x2="359" y2="820" stroke="#57534e" stroke-width="1.2"/>
+<text x="50" y="837" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_network: shared_ptr&lt;INetworkSession&gt;</text>
+<text x="50" y="854" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_events: shared_ptr&lt;NetworkEvents&gt;</text>
+<text x="50" y="871" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_controller: shared_ptr&lt;GameController&gt;</text>
+<line x1="40" y1="881" x2="359" y2="881" stroke="#57534e" stroke-width="1.2"/>
+<text x="50" y="898" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+start(table: TableScreen&amp;)</text>
+<text x="50" y="915" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">+update()</text>
+<rect x="40" y="1060" width="210" height="75" fill="#ffffff" stroke="#57534e" stroke-width="1.6"/>
+<text x="145.0" y="1080" text-anchor="middle" font-size="12" fill="#333">«interface»</text>
+<text x="145.0" y="1098" text-anchor="middle" font-size="15" font-weight="bold" font-style="italic" fill="#111">GameSession</text>
+<line x1="40" y1="1108" x2="250" y2="1108" stroke="#57534e" stroke-width="1.2"/>
+<text x="50" y="1125" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">(vezi diagrama principală)</text>
+<rect x="270" y="1060" width="210" height="57" fill="#ffffff" stroke="#57534e" stroke-width="1.6"/>
+<text x="375.0" y="1080" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">GameController</text>
+<line x1="270" y1="1090" x2="480" y2="1090" stroke="#57534e" stroke-width="1.2"/>
+<text x="280" y="1107" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#78716c">(vezi diagrama principală)</text>
+<polyline points="1030,400 1030,288" fill="none" stroke="#444" stroke-width="1.3" marker-end="url(#tri)"/>
+<polyline points="1300,400 1300,288" fill="none" stroke="#444" stroke-width="1.3" marker-end="url(#tri)"/>
+<polyline points="700,650 700,553" fill="none" stroke="#444" stroke-width="1.3" stroke-dasharray="7,5" marker-end="url(#tri)"/>
+<polyline points="1300,650 1300,476" fill="none" stroke="#444" stroke-width="1.3" stroke-dasharray="7,5" marker-end="url(#tri)"/>
+<polyline points="1000,180 872,180" fill="none" stroke="#444" stroke-width="1.3" stroke-dasharray="7,5" marker-end="url(#open)"/>
+<text x="936.0" y="172" text-anchor="middle" font-size="12" font-style="italic" fill="#444" stroke="#ffffff" stroke-width="4" paint-order="stroke">anunță (Observer)</text>
+<polyline points="366,150 560,150" fill="none" stroke="#444" stroke-width="1.3" stroke-dasharray="7,5" marker-end="url(#tri)"/>
+<polyline points="323,440 660,440" fill="none" stroke="#444" stroke-width="1.3" marker-end="url(#open)"/>
+<text x="560" y="432" text-anchor="middle" font-size="12" font-style="italic" fill="#444" stroke="#ffffff" stroke-width="4" paint-order="stroke">m_host</text>
+<polyline points="330,620 1260,620 1260,476" fill="none" stroke="#444" stroke-width="1.3" marker-end="url(#open)"/>
+<text x="900" y="612" text-anchor="middle" font-size="12" font-style="italic" fill="#444" stroke="#ffffff" stroke-width="4" paint-order="stroke">m_client</text>
+<polyline points="700,1023 700,1120" fill="none" stroke="#444" stroke-width="1.3" marker-start="url(#diamondFilled)" marker-end="url(#open)"/>
+<text x="740" y="1071.5" text-anchor="middle" font-size="12" font-style="italic" fill="#444" stroke="#ffffff" stroke-width="4" paint-order="stroke">m_game</text>
+<text x="708" y="1114" font-size="12" fill="#222" stroke="#ffffff" stroke-width="3" paint-order="stroke">1</text>
+<polyline points="585,1023 585,1340 620,1340" fill="none" stroke="#444" stroke-width="1.3" marker-start="url(#diamondFilled)" marker-end="url(#open)"/>
+<text x="585" y="1250" text-anchor="middle" font-size="12" font-style="italic" fill="#444" stroke="#ffffff" stroke-width="4" paint-order="stroke">m_encoder</text>
+<polyline points="932,1140 1240,1140" fill="none" stroke="#444" stroke-width="1.3" stroke-dasharray="7,5" marker-end="url(#tri)"/>
+<polyline points="932,1175 1240,1175" fill="none" stroke="#444" stroke-width="1.3" marker-end="url(#open)"/>
+<text x="1086.0" y="1167" text-anchor="middle" font-size="12" font-style="italic" fill="#444" stroke="#ffffff" stroke-width="4" paint-order="stroke">m_game (învelește)</text>
+<text x="1222" y="1193" font-size="12" fill="#222" stroke="#ffffff" stroke-width="3" paint-order="stroke">1</text>
+<polyline points="924,1345 1240,1345" fill="none" stroke="#444" stroke-width="1.3" stroke-dasharray="7,5" marker-end="url(#tri)"/>
+<polyline points="1571,690 1790,690" fill="none" stroke="#444" stroke-width="1.3" marker-start="url(#diamondFilled)" marker-end="url(#open)"/>
+<text x="1680.5" y="682" text-anchor="middle" font-size="12" font-style="italic" fill="#444" stroke="#ffffff" stroke-width="4" paint-order="stroke">m_game</text>
+<text x="1774" y="708" font-size="12" fill="#222" stroke="#ffffff" stroke-width="3" paint-order="stroke">1</text>
+<polyline points="1830,802 1830,860 1680,860 1680,1140 1450,1140" fill="none" stroke="#444" stroke-width="1.3" stroke-dasharray="7,5" marker-end="url(#tri)"/>
+<polyline points="1900,802 1900,960" fill="none" stroke="#444" stroke-width="1.3" marker-start="url(#diamondFilled)" marker-end="url(#open)"/>
+<text x="1945" y="885.0" text-anchor="middle" font-size="12" font-style="italic" fill="#444" stroke="#ffffff" stroke-width="4" paint-order="stroke">m_snapshot</text>
+<polyline points="1974,1010 2090,1010" fill="none" stroke="#444" stroke-width="1.3" marker-start="url(#diamondFilled)" marker-end="url(#open)"/>
+<text x="2032.0" y="1002" text-anchor="middle" font-size="12" font-style="italic" fill="#444" stroke="#ffffff" stroke-width="4" paint-order="stroke">players, dealer</text>
+<text x="2050" y="1028" font-size="12" fill="#222" stroke="#ffffff" stroke-width="3" paint-order="stroke">1..5</text>
+<polyline points="2180,1095 2180,1320" fill="none" stroke="#444" stroke-width="1.3" stroke-dasharray="7,5" marker-end="url(#tri)"/>
+<polyline points="100,925 100,1060" fill="none" stroke="#444" stroke-width="1.3" stroke-dasharray="7,5" marker-end="url(#tri)"/>
+<polyline points="330,925 330,1060" fill="none" stroke="#444" stroke-width="1.3" marker-end="url(#open)"/>
+<text x="385" y="996.5" text-anchor="middle" font-size="12" font-style="italic" fill="#444" stroke="#ffffff" stroke-width="4" paint-order="stroke">m_controller</text>
+<text x="338" y="1054" font-size="12" fill="#222" stroke="#ffffff" stroke-width="3" paint-order="stroke">1</text>
+<rect x="25" y="1500" width="2375" height="110" rx="4" fill="#ffffff" stroke="#999" stroke-width="1"/>
+<text x="39" y="1524" font-size="14" font-weight="bold" fill="#222">Legendă</text>
+<rect x="39" y="1540" width="30" height="18" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+<text x="79" y="1554" font-size="13" fill="#222">Interfață din API</text>
+<rect x="269" y="1540" width="30" height="18" fill="#dcfce7" stroke="#16a34a" stroke-width="1.6"/>
+<text x="309" y="1554" font-size="13" fill="#222">Enum din API</text>
+<rect x="499" y="1540" width="30" height="18" fill="#fef3c7" stroke="#d97706" stroke-width="1.6"/>
+<text x="539" y="1554" font-size="13" fill="#222">Structură din API</text>
+<rect x="729" y="1540" width="30" height="18" fill="#f5f5f4" stroke="#57534e" stroke-width="1.6"/>
+<text x="769" y="1554" font-size="13" fill="#222">Clasă internă Backend</text>
+<rect x="959" y="1540" width="30" height="18" fill="#ffffff" stroke="#57534e" stroke-width="1.6"/>
+<text x="999" y="1554" font-size="13" fill="#222">Clasă din Frontend</text>
+<polyline points="39,1585 89,1585" fill="none" stroke="#444" stroke-width="1.3" stroke-dasharray="7,5" marker-end="url(#tri)"/>
+<text x="101" y="1589" font-size="12" fill="#222">realizează (implementează)</text>
+<polyline points="329,1585 379,1585" fill="none" stroke="#444" stroke-width="1.3" marker-end="url(#tri)"/>
+<text x="391" y="1589" font-size="12" fill="#222">moștenește</text>
+<polyline points="619,1585 669,1585" fill="none" stroke="#444" stroke-width="1.3" marker-start="url(#diamondFilled)" marker-end="url(#open)"/>
+<text x="681" y="1589" font-size="12" fill="#222">compoziție (deține)</text>
+<polyline points="909,1585 959,1585" fill="none" stroke="#444" stroke-width="1.3" marker-end="url(#open)"/>
+<text x="971" y="1589" font-size="12" fill="#222">asociere</text>
+<polyline points="1199,1585 1249,1585" fill="none" stroke="#444" stroke-width="1.3" stroke-dasharray="7,5" marker-end="url(#open)"/>
+<text x="1261" y="1589" font-size="12" fill="#222">dependență</text>
+</svg>

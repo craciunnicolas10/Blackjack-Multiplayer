@@ -64,27 +64,39 @@ uneori, în condiția din nota de pe diagramă.
 
 ## Class Diagram
 
+Sunt două diagrame, cu aceeași legendă: jocul (logica, API-ul lui și legătura cu masa) și
+jocul în rețea. Clasele care apar pe amândouă (ex. `IGame`) sunt desenate complet doar pe
+prima; pe a doua apar ca o cutie scurtă „(vezi diagrama principală)”.
+
+### Jocul
+
 ![Class Diagram](class_diagram.png)
 
-Sursa e `class_diagram.svg`. PNG-ul se regenerează la fel ca la Use Case:
+### Jocul în rețea
+
+![Class Diagram: jocul în rețea](class_diagram_retea.png)
+
+Sursele sunt `class_diagram.svg` și `class_diagram_retea.svg`. PNG-urile se regenerează cu:
 
 ```bash
-magick -density 144 class_diagram.svg class_diagram.png
+magick -density 192 class_diagram.svg class_diagram.png
+magick -density 192 class_diagram_retea.svg class_diagram_retea.png
 ```
 
 ### Culori
 
 | Culoare | Ce înseamnă | Elemente |
 |---|---|---|
-| Albastru | Interfață din API | `IGame`, `IGameListener`, `IPlayer`, `IDeck` |
-| Verde | Enum din API | `ESuit`, `ERank`, `EGameState`, `ERoundResult` |
+| Albastru | Interfață din API | `IGame`, `IGameListener`, `IPlayer`, `IDeck`; în rețea `INetworkSession`, `INetworkHost`, `INetworkClient`, `INetworkListener` |
+| Verde | Enum din API | `ESuit`, `ERank`, `EGameState`, `ERoundResult`; în rețea `EConnectResult`, `EJoinRejection` |
 | Portocaliu | Structură din API | `Card` |
-| Gri | Clasă internă din Backend (nu e în API) | `Game`, `Player`, `Dealer`, `Deck`, `hand_score` |
-| Alb | Clasă din Frontend | `GameController`, `TableScreen` |
+| Gri | Clasă internă din Backend (nu e în API) | `Game`, `Player`, `Dealer`, `Deck`, `hand_score`; în rețea `NetworkHost`, `NetworkClient`, `RemoteGame`, `HostedGame`, `EventEncoder`, `GameSnapshot`, `PlayerSnapshot`, `ListenerList` |
+| Alb | Clasă din Frontend | `GameController`, `TableScreen`, `GameSession`, `LocalSession`, `NetworkSession`, `NetworkEvents`, ecranele de lobby |
 
 API-ul e tot ce vede Frontend-ul: fișierele din `game/Backend/include/Backend/` (fără
-subfolderul `game/`). Clasele interne stau în `include/Backend/game/` și `src/game/` și se
-creează doar prin `IGame::Produce()`.
+subfolderele `game/` și `net/`). Clasele interne stau în `include/Backend/game/`,
+`include/Backend/net/` și `src/` și se creează doar prin `IGame::Produce()`,
+`INetworkHost::Produce()` și `INetworkClient::Produce()`.
 
 ### Relații importante
 
@@ -98,6 +110,21 @@ creează doar prin `IGame::Produce()`.
 - **`IDeck`:** `Game` primește pachetul din afară (`IGame::Produce(deck)`), deci testele pot
   folosi un pachet cu cărțile într-o ordine cunoscută sau un mock.
 - **`hand_score`:** funcții libere (nu o clasă) pentru scorul mâinii și blackjack.
+- **Fără reguli în interfață:** masa întreabă jocul ce e permis (`IGame::CanPlaceBet`,
+  `IGame::CanDoubleDown`, `IPlayer::IsBusted`) în loc să calculeze singură.
+- **`GameSession`:** masa primește de la el jocul: `LocalSession` (toți la acest calculator)
+  sau `NetworkSession` (jocul în rețea).
+
+În rețea (a doua diagramă):
+
+- **Proxy:** `RemoteGame` implementează `IGame` pe calculatorul jucătorului și ține locul
+  jocului gazdei; `NetworkClient` îl ține la zi din mesajele primite (`GameSnapshot`).
+- **Decorator:** `HostedGame` implementează `IGame` și învelește jocul real al gazdei; în plus
+  anunță rețeaua când nu mai poate porni nicio rundă.
+- **Observer:** `EventEncoder` ascultă jocul real (`IGameListener`) și trimite fiecare anunț în
+  rețea; `INetworkListener` anunță Frontend-ul (`NetworkEvents`) ce se întâmplă în lobby și
+  cine iese.
+- **Moștenire între interfețe:** `INetworkHost` și `INetworkClient` extind `INetworkSession`.
 
 Notație: metodele în *italic* sunt abstracte (pur virtuale), cele <u>subliniate</u> sunt
 statice. „metodele din IGame (override)” ține locul metodelor din interfață, ca să nu fie

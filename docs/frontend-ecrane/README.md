@@ -110,7 +110,8 @@ ea anunță ce a ales jucătorul.
 |---|---|
 | `setPlayerMoney(seat, money)` | Banii jucătorului. Dacă e o carte pe drum, suma se schimbă după ce ajunge. |
 | `setPlayerBet(seat, bet)` | Pariul (textul și teancul de jetoane). |
-| `setPlayerScore(seat, score)` / `setDealerScore(score)` | Bulina cu scorul. `nullopt` o ascunde. Peste 21 pornește efectul „Peste 21!”. |
+| `setPlayerScore(seat, score, busted)` / `setDealerScore(score, busted)` | Bulina cu scorul. `nullopt` o ascunde. `busted` (spus de joc) o face roșie, iar la jucător pornește efectul „Peste 21!”. |
+| `setDoubleDownAllowed(allowed)` | Double e activ doar când jocul spune că jucătorul la rând poate dubla. |
 | `dealPlayerCard(seat, rank, suit)` | O carte nouă pentru jucător, din pachet. |
 | `dealDealerCard(rank, suit, faceDown)` | O carte pentru dealer. Cu fața în jos, valoarea e ignorată, ca să nu apară pe ecran. |
 | `revealDealerCard(rank, suit)` | Întoarce cartea ascunsă a dealerului. |
@@ -150,12 +151,12 @@ doar mută informația dintr-o parte în alta, în ambele sensuri:
 
 | Jocul anunță | Masa face |
 |---|---|
-| starea `Betting` (după `StartRound`) | `clearRound()`, pariurile la 0, apoi panoul de pariu pentru primul jucător |
+| starea `Betting` (după `StartRound`) | `clearRound()`, pariurile la 0, apoi panoul de pariu pentru primul jucător pentru care `CanPlaceBet(i)` |
 | `OnBetPlaced(i, amount)` | `setPlayerBet`, `setPlayerMoney`; în timpul pariurilor, panoul trece la următorul jucător (după ultimul se închide, iar jocul împarte singur cărțile). Vine și după Double, cu pariul dublat. |
-| `OnPlayerCardDealt(i, card)` | `dealPlayerCard`, `setPlayerScore(GetPlayer(i)->GetScore())` |
+| `OnPlayerCardDealt(i, card)` | `dealPlayerCard`, `setPlayerScore(GetScore(), IsBusted())`, `setDoubleDownAllowed(CanDoubleDown())` |
 | `OnDealerCardDealt(card, isFaceDown)` | `dealDealerCard`, `setDealerScore`. Cât e o carte ascunsă, jocul dă doar scorul celor vizibile. |
 | `OnDealerCardRevealed(card)` | `revealDealerCard`, `setDealerScore` |
-| `OnTurnChanged(i)` | `setCurrentSeat(i)` |
+| `OnTurnChanged(i)` | `setCurrentSeat(i)`, `setDoubleDownAllowed(CanDoubleDown())` |
 | starea `DealerTurn` | `setCurrentSeat(nullopt)` |
 | `OnRoundEnded(i, result)` | `showResult`, `setPlayerMoney` |
 | starea `RoundOver` | `showRoundSummary`, cu câștigul = banii de acum − banii de la începutul rundei |
@@ -181,12 +182,8 @@ Numele jucătorilor ajung la joc ca UTF-8 (`sf::String::toUtf8`), ca să rămân
 Limitele de pariu sunt `Backend::kMinBet` / `kMaxBet`. Fiecărui jucător i se propune pariul din
 runda trecută (în prima rundă, 50).
 
-Ce mai decide masa singură, până când Backend-ul oferă informația:
-- **cine pariază:** sare peste cine are mai puțin decât `kMinBet`, ca jocul;
-- **Double activ doar cu 2 cărți** (`TableScreen::refreshActionButtons`);
-- **„Peste 21!”** apare când scorul trece de 21 (`TableScreen::setPlayerScore`).
-
-Când Backend-ul adaugă `CanPlaceBet` / `CanDoubleDown` / `IsBusted`, se înlocuiesc cu ele.
+Masa nu decide nicio regulă: cine mai pariază (`IGame::CanPlaceBet`), când se poate dubla
+(`IGame::CanDoubleDown`) și cine a trecut de 21 (`IPlayer::IsBusted`) le spune jocul.
 
 ## Reguli folosite în cod
 

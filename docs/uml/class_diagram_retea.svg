@@ -87,7 +87,7 @@
 <text x="730.5" y="670" text-anchor="middle" font-size="15" font-weight="bold" fill="#111">NetworkHost</text>
 <line x1="560" y1="680" x2="901" y2="680" stroke="#57534e" stroke-width="1.2"/>
 <text x="570" y="697" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_hostName: string</text>
-<text x="570" y="714" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_listener: TcpListener</text>
+<text x="570" y="714" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_listener: ReusableListener</text>
 <text x="570" y="731" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_port: unsigned short</text>
 <text x="570" y="748" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_connections: vector&lt;Connection&gt;</text>
 <text x="570" y="765" font-family="DejaVu Sans Mono, Consolas, monospace" font-size="12" fill="#1c1917">-m_listeners: ListenerList&lt;INetworkListener&gt;</text>

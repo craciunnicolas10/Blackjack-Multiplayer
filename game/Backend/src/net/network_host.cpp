@@ -18,7 +18,7 @@ namespace Backend {
     bool NetworkHost::Listen() {
         for (unsigned short i = 0; i < kPortCount; ++i) {
             const auto port = static_cast<unsigned short>(kDefaultPort + i);
-            if (m_listener.listen(port) == sf::Socket::Status::Done) {
+            if (m_listener.ListenReusable(port)) {
                 m_listener.setBlocking(false);
                 m_port = port;
                 return true;

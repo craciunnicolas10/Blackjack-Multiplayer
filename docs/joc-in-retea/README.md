@@ -49,8 +49,8 @@ Dacă cineva închide jocul sau i se rupe legătura, jocul se oprește pentru to
     `--permanent` rămâne).
 - Toți trebuie să aibă **aceeași versiune** a jocului; altfel gazda refuză conectarea.
 
-**Portul.** Gazda folosește 53000. Dacă e ocupat (ex. jocul de adineauri, pe care sistemul îl
-mai ține câteva zeci de secunde), ia următorul liber și îl afișează lângă adresă
+**Portul.** Gazda folosește 53000. Dacă e ocupat (ex. mai e deschis un joc pe același
+calculator), ia următorul liber și îl afișează lângă adresă
 (`192.168.1.5:53001`); atunci adresa se scrie la conectare exact așa, cu tot cu port.
 
 ## Cum funcționează
@@ -133,6 +133,7 @@ Fiecare mesaj e un `sf::Packet` care începe cu tipul lui (`net/protocol.h`).
 | `net/network_host.h` | `NetworkHost`: lobby-ul și jocul la gazdă |
 | `net/network_client.h` | `NetworkClient`: legătura jucătorului cu gazda |
 | `net/listener_list.h` | Lista de ascultători (`weak_ptr`) comună |
+| `net/reusable_listener.h` | Listener-ul gazdei; portul poate fi refolosit imediat după ce s-a închis un joc (`SO_REUSEADDR`) |
 
 Backend-ul folosește modulul `sfml-network` din SFML (doar el; nimic grafic).
 

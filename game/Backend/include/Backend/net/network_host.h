@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <SFML/Network/Packet.hpp>
-#include <SFML/Network/TcpListener.hpp>
 #include <SFML/Network/TcpSocket.hpp>
 
 #include <Backend/IGame.h>
@@ -16,6 +15,7 @@
 #include <Backend/net/hosted_game.h>
 #include <Backend/net/listener_list.h>
 #include <Backend/net/protocol.h>
+#include <Backend/net/reusable_listener.h>
 
 namespace Backend {
     // Gazda jocului in retea (vezi INetworkHost). In lobby primeste conexiuni si verifica cine
@@ -65,7 +65,7 @@ namespace Backend {
         int JoinedCount() const;
 
         std::string m_hostName;
-        sf::TcpListener m_listener;
+        ReusableListener m_listener;
         unsigned short m_port = 0;
         std::vector<Connection> m_connections;
         ListenerList<INetworkListener> m_listeners;

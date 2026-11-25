@@ -75,12 +75,16 @@ endif()
 
 target_link_libraries(BackendTests PRIVATE GTest::gtest GTest::gmock GTest::gtest_main)
 
-add_custom_command(TARGET BackendTests POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        $<TARGET_RUNTIME_DLLS:BackendTests>
-        $<TARGET_FILE_DIR:BackendTests>
-    COMMAND_EXPAND_LISTS
-)
+# DLL-urile (SFML) langa BackendTests.exe. Doar pe Windows: pe Linux lista e goala, iar
+# copy_if_different fara fisiere opreste build-ul.
+if(WIN32)
+    add_custom_command(TARGET BackendTests POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_RUNTIME_DLLS:BackendTests>
+            $<TARGET_FILE_DIR:BackendTests>
+        COMMAND_EXPAND_LISTS
+    )
+endif()
 
 if(MSVC)
     target_compile_options(BackendTests PRIVATE /utf-8 /bigobj)
@@ -104,7 +108,7 @@ if(BLACKJACK_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
             COMMAND ${GCOVR_EXECUTABLE}
                 --root ${CMAKE_SOURCE_DIR}
                 --filter "${CMAKE_SOURCE_DIR}/Backend/"
-                --exclude "${CMAKE_SOURCE_DIR}/Tests/"
+                --exclude "${CMAKE_SOURCE_DIR}/tests/"
                 ${GCOVR_GCOV_ARGS}
                 --html-details ${CMAKE_BINARY_DIR}/coverage/index.html
                 --xml ${CMAKE_BINARY_DIR}/coverage/coverage.xml

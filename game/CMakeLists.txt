@@ -32,7 +32,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(Backend)
 add_subdirectory(Frontend)
-add_subdirectory(Tests)
+
+# Unit testele (GoogleTest + GoogleMock): ctest din folderul de build le gaseste pe toate.
+enable_testing()
+add_subdirectory(tests)
 
 foreach (target Backend Frontend)
     if (MSVC)

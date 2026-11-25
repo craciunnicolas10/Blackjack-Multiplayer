@@ -11,9 +11,9 @@
 
 namespace Backend {
     inline constexpr int kMaxPlayers = 4;
-    inline constexpr int kStartingBalance = 1000;
+    inline constexpr int kStartingBalance = 10000;
     inline constexpr int kMinBet = 10;
-    inline constexpr int kMaxBet = 500;
+    inline constexpr int kMaxBet = 10000000000000;
 
     // Punctul de intrare in logica jocului. Se creeaza cu IGame::Produce().
     //
